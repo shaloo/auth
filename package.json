@@ -1,0 +1,19 @@
+{
+  "name": "arcana-login",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dkg_client": "/Users/makyl/Documents/repositories/dkg_client"
+  },
+  "devDependencies": {
+    "ts-loader": "^5.3.3",
+    "typescript": "^4.2.4",
+    "webpack": "4.44.2"
+  }
+}
