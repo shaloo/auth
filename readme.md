@@ -29,7 +29,7 @@ googleLoginBtn.addEventListener('click', () => {
 });
 ```
 
-### Initialize
+### Initialize the SDK
 
 ```js
 const { ArcanaLogin } = window.arcana_login;
@@ -53,8 +53,14 @@ window.onload = () => {
 };
 ```
 
-### Get private key
+### Initiate login and get private key
 
 ```js
-const pk = await arcanaLogin.doLogin();
+const pk = await arcanaLogin.go();
+```
+
+### Get user info
+
+```js
+const userInfo = await arcanaLogin.getUserInfo();
 ```

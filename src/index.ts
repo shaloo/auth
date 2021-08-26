@@ -26,7 +26,7 @@ export class ArcanaLogin {
     this.params = initParams;
   }
 
-  public async doLogin(): Promise<{ privateKey: string }> {
+  public async go(): Promise<{ privateKey: string }> {
     this.id = generateID();
     const url = getOauthLoginUrl({
       loginType: this.params.loginType,
@@ -41,6 +41,14 @@ export class ArcanaLogin {
       return response;
     } else {
       throw new Error('Could not open login window');
+    }
+  }
+
+  public async getUserInfo(): Promise<UserInfo> {
+    if (this.userInfo) {
+      return this.userInfo;
+    } else {
+      throw new Error('Please initialize the sdk before fetching user info.');
     }
   }
 
