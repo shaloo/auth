@@ -102,16 +102,7 @@ export class AuthProvider {
     idToken: string
   ): Promise<string> {
     console.log({ id, idToken, KeyReconstructor });
-    const keystore = new KeyReconstructor(this.params.appAddress, {
-      getNodesList: async () => {
-        return {
-          nodes: [8085, 8080, 8082, 8081, 8084, 8083].map(
-            (p) => `http://localhost:${p}/rpc`
-          ),
-          indexes: [1, 2, 3, 4, 5, 6],
-        };
-      },
-    });
+    const keystore = new KeyReconstructor(this.params.appAddress);
     const data = await keystore.getPrivateKey({
       idToken,
       id,

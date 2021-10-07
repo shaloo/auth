@@ -1,6 +1,13 @@
-import { getInfoHandler, parseHash } from '../src/utils';
+import { getLoginHandler, parseHash } from '../src/utils';
 import { LoginType } from '../src/types';
-import { DiscordInfo, GoogleInfo, RedditInfo, TwitchInfo } from '../src/oauth';
+import {
+  DiscordHandler,
+  GithubHandler,
+  GoogleHandler,
+  RedditHandler,
+  TwitchHandler,
+  TwitterHandler,
+} from '../src/oauth';
 
 describe('parseHash', () => {
   test('returns expected hash params from url', () => {
@@ -19,13 +26,17 @@ describe('parseHash', () => {
 
 describe('getInfoHandler', () => {
   test('returns correct handler depending on login type', () => {
-    const gh = getInfoHandler(LoginType.Google);
-    expect(gh instanceof GoogleInfo).toBe(true);
-    const dh = getInfoHandler(LoginType.Discord);
-    expect(dh instanceof DiscordInfo).toBe(true);
-    const rh = getInfoHandler(LoginType.Reddit);
-    expect(rh instanceof RedditInfo).toBe(true);
-    const th = getInfoHandler(LoginType.Twitch);
-    expect(th instanceof TwitchInfo).toBe(true);
+    const gh = getLoginHandler(LoginType.Google, '');
+    expect(gh instanceof GoogleHandler).toBe(true);
+    const dh = getLoginHandler(LoginType.Discord, '');
+    expect(dh instanceof DiscordHandler).toBe(true);
+    const rh = getLoginHandler(LoginType.Reddit, '');
+    expect(rh instanceof RedditHandler).toBe(true);
+    const th = getLoginHandler(LoginType.Twitch, '');
+    expect(th instanceof TwitchHandler).toBe(true);
+    const twh = getLoginHandler(LoginType.Twitter, '');
+    expect(twh instanceof TwitterHandler).toBe(true);
+    const gih = getLoginHandler(LoginType.Github, '');
+    expect(gih instanceof GithubHandler).toBe(true);
   });
 });
