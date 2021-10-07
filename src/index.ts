@@ -1,8 +1,10 @@
 import { LoginType } from './types';
-import { handleRedirectPage, getInfoHandler } from './utils';
-import { getOauthLoginUrl } from './oauth';
-import { getPrivateKey } from 'dkg_client';
+import { handleRedirectPage, getLoginHandler, RedirectParams } from './utils';
+import { OauthHandler } from './oauth';
 import { UserInfo } from './types';
+import { default as KeyReconstructor } from '@arcana-tech/arcana_keystore';
+import SessionStore from './sessionStore';
+import Popup from './popup';
 
 interface InitParams {
   appAddress: string;
@@ -11,99 +13,106 @@ interface InitParams {
   redirectUri: string;
 }
 
-interface HashParams {
-  access_token: string;
-  id_token: string;
+enum StoreIndex {
+  privateKey,
+  userInfo,
 }
 
-export class ArcanaLogin {
+interface Store {
+  set(key: string, value: string, expiresAt?: Date | number): void;
+  get(key: string): string | null;
+  delete(key: string): void;
+}
+
+export class AuthProvider {
   public static handleRedirectPage = handleRedirectPage;
   private params: InitParams;
-  private userInfo: UserInfo;
   private id: string;
-  private privateKey = '';
+  private loginHandler: OauthHandler;
+  private store: Store;
   constructor(initParams: InitParams) {
     this.params = initParams;
+    this.store = new SessionStore(this.params.loginType);
   }
 
-  public async go(): Promise<{ privateKey: string }> {
-    this.id = generateID();
-    const url = getOauthLoginUrl({
-      loginType: this.params.loginType,
-      clientId: this.params.clientId,
+  public async signIn(): Promise<{ privateKey: string }> {
+    if (this.isLoggedIn()) {
+      const privateKey = this.store.get(StoreIndex[StoreIndex.privateKey]);
+      if (privateKey) {
+        return { privateKey };
+      }
+    }
+
+    this.loginHandler = getLoginHandler(
+      this.params.loginType,
+      this.params.appAddress
+    );
+
+    const url = await this.loginHandler.getAuthUrl({
+      clientID: this.params.clientId,
       redirectUri: this.params.redirectUri,
       state: this.id,
     });
-    const windowFeatures = 'resizable=no,height=700,width=1200';
-    const win = window.open(url, '_blank', windowFeatures);
-    if (win) {
-      const response = await this.handleWindowResponse(win, this.id);
-      return response;
-    } else {
-      throw new Error('Could not open login window');
-    }
+
+    const popup = new Popup(url);
+    const params = await popup.open();
+    const privateKey = await this.fetchUserInfoAndPrivateKey(params);
+    return { privateKey };
   }
 
   public async getUserInfo(): Promise<UserInfo> {
-    if (this.userInfo) {
-      return this.userInfo;
+    const userInfo = this.store.get(StoreIndex[StoreIndex.userInfo]);
+    if (userInfo) {
+      const info: UserInfo = JSON.parse(userInfo);
+      return info;
     } else {
       throw new Error('Please initialize the sdk before fetching user info.');
     }
   }
 
-  private handleWindowResponse(
-    win: Window,
-    id: string
-  ): Promise<{ privateKey: string }> {
-    return new Promise((resolve, reject) => {
-      const handler = async (event: MessageEvent) => {
-        const { status, params, error = null } = event.data;
-        if (params.state !== id) {
-          return;
-        }
-        window.removeEventListener('message', handler);
-        win.close();
-        if (status === 'success') {
-          const privateKey = await this.fetchUserInfoAndPrivateKey(params);
-          return resolve({ privateKey });
-        } else {
-          return reject(error);
-        }
-      };
-      window.addEventListener('message', handler, false);
-    });
+  public isLoggedIn(): boolean {
+    const privateKey = this.store.get(StoreIndex[StoreIndex.privateKey]);
+    if (privateKey) {
+      return true;
+    }
+    return false;
   }
 
-  private async fetchUserInfoAndPrivateKey({
-    id_token: idToken,
-    access_token: accessToken,
-  }: HashParams) {
-    if (!idToken) {
-      idToken = accessToken;
+  private async fetchUserInfoAndPrivateKey(params: RedirectParams) {
+    params = await this.loginHandler.handleRedirectParams(params);
+    if (!params.access_token || !params.id_token) {
+      throw new Error('Error on redirect params');
     }
-    const id = await this.getUserInfoFromToken(accessToken);
-    const privateKey = await this.getUserPrivateKey(id, idToken);
-    this.privateKey = privateKey;
-    return this.privateKey;
+    const id = await this.getUserInfoFromToken(params.access_token);
+    const privateKey = await this.getUserPrivateKey(id, params.id_token);
+
+    this.store.set(StoreIndex[StoreIndex.privateKey], privateKey);
+
+    return privateKey;
   }
 
   private async getUserInfoFromToken(accessToken: string): Promise<string> {
-    const infoHandler = getInfoHandler(
-      this.params.loginType,
-      this.params.clientId
-    );
-    const userInfo = await infoHandler.getUserInfo(accessToken);
-    this.userInfo = userInfo;
-    return this.userInfo.id;
+    const userInfo = await this.loginHandler.getUserInfo(accessToken);
+    this.store.set(StoreIndex[StoreIndex.userInfo], JSON.stringify(userInfo));
+    return userInfo.id;
   }
 
   private async getUserPrivateKey(
     id: string,
     idToken: string
   ): Promise<string> {
-    console.log({ id, idToken });
-    const data = await getPrivateKey({
+    console.log({ id, idToken, KeyReconstructor });
+    const keystore = new KeyReconstructor(this.params.appAddress, {
+      getNodesList: async () => {
+        return {
+          nodes: [8085, 8080, 8082, 8081, 8084, 8083].map(
+            (p) => `http://localhost:${p}/rpc`
+          ),
+          indexes: [1, 2, 3, 4, 5, 6],
+        };
+      },
+    });
+    const data = await keystore.getPrivateKey({
       idToken,
       id,
       verifier: this.params.loginType,
@@ -112,7 +121,3 @@ export class ArcanaLogin {
     return data.privateKey;
   }
 }
-
-const generateID = function () {
-  return '_' + Math.random().toString(36).substr(2, 9);
-};

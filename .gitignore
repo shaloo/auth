@@ -1,4 +1,4 @@
 /node_modules/
 /dist_bundle/
 /dist/
-    
+.DS_Store

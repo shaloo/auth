@@ -1,19 +1,28 @@
 const googleLoginBtn = document.getElementById('google-login');
+console.log({ window });
+const { AuthProvider } = window.arcana_login;
 
-const { ArcanaLogin } = window.arcana_login;
-
+const arcanaLogin = new AuthProvider({
+  loginType: 'twitter',
+  appAddress: '0xbc376e1127C420867272c5Bc56C50e443F5cA5c0',
+  clientId: 'IjTXO5J4JkyjBzxsyQvLXbriG',
+  redirectUri: 'http://localhost:9001/examples/redirect',
+});
 const doGoogleLogin = async () => {
-  const arcanaLogin = new ArcanaLogin({
-    loginType: 'google',
-    appAddress: '0xc1912fee45d61c87cc5ea59dae31190fffff232d',
-    clientId: '513082799772-udwuidnajdkadnjand.apps.googleusercontent.com',
-    redirectUri: 'http://localhost:8080/examples/redirect',
-  });
-
-  const pk = await arcanaLogin.doLogin();
+  const pk = await arcanaLogin.signIn();
   console.log({ pk });
 };
 
 googleLoginBtn.addEventListener('click', () => {
   doGoogleLogin();
 });
+
+const checkLogin = async () => {
+  const isLoggedIn = arcanaLogin.isLoggedIn();
+  if (isLoggedIn) {
+    const pk = await arcanaLogin.signIn();
+    console.log({ pk });
+  }
+};
+
+checkLogin();

@@ -32,11 +32,11 @@ googleLoginBtn.addEventListener('click', () => {
 ### Initialize the SDK
 
 ```js
-const { ArcanaLogin } = window.arcana_login;
+const { AuthProvider } = window.arcana_login;
 
-const arcanaLogin = new ArcanaLogin({
-   loginType: "google", // discord, google, reddit and twitch
-   appAddress: "<verifier_address>",
+const arcanaAuth = new AuthProvider({
+   loginType: "google", // discord, google, twitter, github, reddit and twitch
+   appAddress: <appID>,
    clientId: "513082793372-5f9ejcvtjggadasdasndmnm0r372qn89.apps.googleusercontent.com",
    redirectUri: <redirectUri>,
 })
@@ -46,21 +46,21 @@ const arcanaLogin = new ArcanaLogin({
 ### On redirect Page
 
 ```js
-const { ArcanaLogin } = window.arcana_login;
+const { AuthProvider } = window.arcana_login;
 
 window.onload = () => {
-  ArcanaLogin.handleRedirectPage();
+  AuthProvider.handleRedirectPage();
 };
 ```
 
 ### Initiate login and get private key
 
 ```js
-const pk = await arcanaLogin.go();
+const pk = await arcanaAuth.signIn();
 ```
 
 ### Get user info
 
 ```js
-const userInfo = await arcanaLogin.getUserInfo();
+const userInfo = await arcanaAuth.getUserInfo();
 ```
