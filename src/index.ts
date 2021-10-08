@@ -55,7 +55,8 @@ export class AuthProvider {
     });
 
     const popup = new Popup(url);
-    const params = await popup.open();
+    popup.open();
+    const params = await popup.getWindowResponse();
     const privateKey = await this.fetchUserInfoAndPrivateKey(params);
     return { privateKey };
   }

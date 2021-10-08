@@ -29,8 +29,9 @@ describe('Session store', () => {
   });
   test('should not get expired value', () => {
     store.set('k', 'some_value', 0);
-    const val = store.get('k');
-    expect(val).toEqual(null);
+    store.set('k2', 'some_value', new Date());
+    expect(store.get('k')).toEqual(null);
+    expect(store.get('k2')).toEqual(null);
   });
   test('should not get deleted value', () => {
     store.set('k', 'some_value');

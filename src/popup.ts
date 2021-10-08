@@ -3,46 +3,56 @@ import { generateID, RedirectParams } from './utils';
 class Popup {
   private window: Window | null;
   private id: string;
-  constructor(public url: string) {}
-
-  public async open(): Promise<RedirectParams> {
+  constructor(public url: string) {
     this.id = generateID();
-    const windowFeatures = getWindowFeatures();
-    this.window = window.open(this.url, '_blank', windowFeatures);
-    if (this.window) {
-      const response = await this.handleWindowResponse(this.id);
-      return response;
-    } else {
-      throw new Error('Could not open popup window');
-    }
   }
 
-  private handleWindowResponse(id: string): Promise<RedirectParams> {
+  public open(): void {
+    const windowFeatures = getWindowFeatures();
+    this.window = window.open(this.url, '_blank', windowFeatures);
+  }
+
+  public getWindowResponse(): Promise<RedirectParams> {
     return new Promise((resolve, reject) => {
       let safeClose = false;
       const closedMonitor = setInterval(() => {
         if (!safeClose && this.window?.closed) {
-          reject(new Error('popup closed by user'));
+          reject('popup closed by user');
         }
       }, 500);
       const handler = async (event: MessageEvent) => {
-        const { status, error = null } = event.data;
-        const params: RedirectParams = event.data.params;
-        safeClose = true;
-        clearInterval(closedMonitor);
-        if (params.state && params.state !== id) {
+        if (!event?.data?.status) {
           return;
         }
-        window.removeEventListener('message', handler);
-        this.window?.close();
-        if (status === 'success') {
+        const { status, error = null, params } = this.getParams(event.data);
+        safeClose = true;
+        clearInterval(closedMonitor);
+        this.clear(handler);
+        if (params.state && params.state !== this.id) {
+          return reject(`state mismatch`);
+        }
+        if (status === 'success' && !error) {
           return resolve(params);
         } else {
-          return reject(error);
+          return reject(`${error}: ${params.error_description}`);
         }
       };
       window.addEventListener('message', handler, false);
     });
+  }
+
+  private getParams(data: MessageEvent['data']) {
+    const {
+      status,
+      params,
+    }: { error: string | null; status: string; params: RedirectParams } = data;
+
+    return { status, error: params.error, params };
+  }
+
+  private clear(handler: (ev: MessageEvent) => void): void {
+    window.removeEventListener('message', handler);
+    this.window?.close();
   }
 }
 

@@ -54,6 +54,7 @@ class SessionStore {
   private addHookForUnload() {
     window.addEventListener('unload', this.persist.bind(this));
   }
+
   private persist() {
     if (typeof window === 'undefined') {
       throw new Error(

@@ -36,7 +36,6 @@ export function getLoginHandler(
 }
 
 export const parseHash = (url: URL): RedirectParams => {
-  console.log({ url });
   let params: RedirectParams = {};
   const queryParams = url.searchParams;
   const hashParams = new URLSearchParams(url.hash.substring(1));
@@ -77,14 +76,17 @@ export interface RedirectResponse {
 }
 export const handleRedirectPage = (origin = '*'): void => {
   try {
-    parseAndSendRedirectParams(origin);
+    parseAndSendRedirectParams(window.location, origin);
   } catch (error) {
     console.log({ error });
   }
 };
 
-export const parseAndSendRedirectParams = (origin: string): void => {
-  const params = parseHash(new URL(window.location.href));
+export const parseAndSendRedirectParams = (
+  location: Location,
+  origin: string
+): void => {
+  const params = parseHash(new URL(location.href));
   const returnParams: RedirectResponse = { status: 'success', params };
   if (params.error) {
     returnParams.status = 'error';

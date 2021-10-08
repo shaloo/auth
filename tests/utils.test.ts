@@ -1,4 +1,4 @@
-import { getLoginHandler, parseHash } from '../src/utils';
+import { getLoginHandler, parseHash, handleRedirectPage } from '../src/utils';
 import { LoginType } from '../src/types';
 import {
   DiscordHandler,
@@ -8,6 +8,42 @@ import {
   TwitchHandler,
   TwitterHandler,
 } from '../src/oauth';
+
+function createMockWindow(href: string) {
+  const postMessage = jest.fn();
+  const originalWindow = { ...window };
+  const windowSpy = jest.spyOn(global, 'window', 'get');
+  windowSpy.mockImplementation(() => ({
+    ...originalWindow,
+    opener: {
+      postMessage,
+    },
+    location: {
+      href,
+    },
+  }));
+  return {
+    spy: windowSpy,
+    postMessage,
+  };
+}
+
+describe('getInfoHandler', () => {
+  test('returns correct handler depending on login type', () => {
+    const gh = getLoginHandler(LoginType.Google, '');
+    expect(gh instanceof GoogleHandler).toBe(true);
+    const dh = getLoginHandler(LoginType.Discord, '');
+    expect(dh instanceof DiscordHandler).toBe(true);
+    const rh = getLoginHandler(LoginType.Reddit, '');
+    expect(rh instanceof RedditHandler).toBe(true);
+    const th = getLoginHandler(LoginType.Twitch, '');
+    expect(th instanceof TwitchHandler).toBe(true);
+    const twh = getLoginHandler(LoginType.Twitter, '');
+    expect(twh instanceof TwitterHandler).toBe(true);
+    const gih = getLoginHandler(LoginType.Github, '');
+    expect(gih instanceof GithubHandler).toBe(true);
+  });
+});
 
 describe('parseHash', () => {
   test('returns expected hash params from url', () => {
@@ -24,19 +60,40 @@ describe('parseHash', () => {
   });
 });
 
-describe('getInfoHandler', () => {
-  test('returns correct handler depending on login type', () => {
-    const gh = getLoginHandler(LoginType.Google, '');
-    expect(gh instanceof GoogleHandler).toBe(true);
-    const dh = getLoginHandler(LoginType.Discord, '');
-    expect(dh instanceof DiscordHandler).toBe(true);
-    const rh = getLoginHandler(LoginType.Reddit, '');
-    expect(rh instanceof RedditHandler).toBe(true);
-    const th = getLoginHandler(LoginType.Twitch, '');
-    expect(th instanceof TwitchHandler).toBe(true);
-    const twh = getLoginHandler(LoginType.Twitter, '');
-    expect(twh instanceof TwitterHandler).toBe(true);
-    const gih = getLoginHandler(LoginType.Github, '');
-    expect(gih instanceof GithubHandler).toBe(true);
+describe('parseAndSendRedirectParams', () => {
+  test('should send success redirect params', () => {
+    const { postMessage } = createMockWindow(
+      'https://example.com/#state=some_state'
+    );
+    handleRedirectPage('*');
+    expect(postMessage).toBeCalledTimes(1);
+    expect(postMessage).toBeCalledWith(
+      { params: { state: 'some_state' }, status: 'success' },
+      '*'
+    );
+  });
+
+  test('should send error redirect params', () => {
+    const { postMessage } = createMockWindow(
+      'https://example.com/#error=some_error'
+    );
+    handleRedirectPage('*');
+    expect(postMessage).toBeCalledTimes(1);
+    expect(postMessage).toBeCalledWith(
+      { error: 'some_error', params: { error: 'some_error' }, status: 'error' },
+      '*'
+    );
+  });
+
+  test('should be called with specified origin', () => {
+    const { postMessage } = createMockWindow(
+      'https://example.com/#error=some_error'
+    );
+    handleRedirectPage('https://some_url');
+    expect(postMessage).toBeCalledTimes(1);
+    expect(postMessage).toBeCalledWith(
+      { error: 'some_error', params: { error: 'some_error' }, status: 'error' },
+      'https://some_url'
+    );
   });
 });
