@@ -6,10 +6,16 @@
   "scripts": {
     "tsc": "tsc .",
     "test": "jest --verbose",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "lint": "eslint ./src"
   },
   "author": "",
   "license": "ISC",
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run test"
+    }
+  },
   "dependencies": {
     "@47ng/codec": "^1.0.1",
     "@arcana-tech/arcana_keystore": "^1.0.0"
@@ -26,6 +32,7 @@
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.24.0",
+    "husky": "^7.0.2",
     "jest": "^27.0.6",
     "jest-environment-jsdom": "^27.2.4",
     "jest-fetch-mock": "^3.0.3",

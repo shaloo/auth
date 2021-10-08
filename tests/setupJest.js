@@ -3,4 +3,4 @@ import { Crypto } from '@peculiar/webcrypto';
 
 fetchMock.enableMocks();
 
-global.crypto = new Crypto();
+window.crypto = new Crypto();
