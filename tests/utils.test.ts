@@ -18,7 +18,7 @@ function createMockWindow(href: string) {
     opener: {
       postMessage,
     },
-    location: href,
+    location: { href },
   }));
   return {
     spy: windowSpy,

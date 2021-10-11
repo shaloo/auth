@@ -12,11 +12,6 @@
   },
   "author": "",
   "license": "ISC",
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run test"
-    }
-  },
   "dependencies": {
     "@47ng/codec": "^1.0.1",
     "@arcana-tech/arcana_keystore": "^1.0.0"
