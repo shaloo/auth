@@ -14,14 +14,14 @@ yarn add @arcana_tech/arcana-login
 ### Using built source
 
 ```html
-<script src="<path-to>/arcana-login.js"></script>
+<script src="<path-to>/arcana_login.js"></script>
 ```
 
 ### Initialise the SDK
 
 ```js
 const { AuthProvider } = window.arcana_login;
-// import { AuthProvider } from '@arcana_tech/arcana-login';
+// import { AuthProvider } from '@arcana-tech/arcana-login';
 
 const arcanaAuth = new AuthProvider({
    appID: <appID>,
@@ -82,14 +82,19 @@ const userInfo = await arcanaAuth.getPublicKey({
 
 ### Check if user already logged in
 ```js
-const isLoggedIn = await arcanaAuth.isLoggedIn(<loginType>)
+const isLoggedIn = await arcanaAuth.isLoggedIn(<loginType>);
 if (isLoggedIn) {
-	const pk = await arcanaAuth.signIn(<loginType>)
+	const pk = await arcanaAuth.signIn(<loginType>);
 	// this wont go through the login flow again
-	const userInfo = await arcanaAuth.getUserInfo(<loginType>)
+	const userInfo = await arcanaAuth.getUserInfo(<loginType>);
 }
 
 // To clear login session
-arcanaAuth.clearSession()
+arcanaAuth.clearSession();
 
 ```
+
+### Variables
+
+* `loginType` - discord, twitter, github, google, twitch, reddit
+* `origin` - Base url of your app. 
