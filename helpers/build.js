@@ -1,5 +1,5 @@
-import serverConfig from '../webpack.config';
-import webpack from 'webpack';
+const serverConfig = require('../webpack.config');
+const webpack = require('webpack');
 
 function generate_build(callback) {
   const compiler = webpack(serverConfig());

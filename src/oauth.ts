@@ -1,3 +1,4 @@
+import { getLogger } from './logger';
 import { UserInfo } from './types';
 import { generateID, RedirectParams } from './utils';
 
@@ -12,6 +13,7 @@ export interface OauthHandler {
   getAuthUrl(params: OauthParams): Promise<string>;
   getUserInfo(accessToken: string): Promise<UserInfo>;
   handleRedirectParams(params: RedirectParams): Promise<RedirectParams>;
+  cleanup(): Promise<void>;
 }
 
 export const request = async <T>(
@@ -20,10 +22,11 @@ export const request = async <T>(
 ): Promise<T> => {
   const response = await fetch(url, { headers });
   const data = await response.json();
+  const logger = getLogger('request');
   if (response.status < 400) {
     return data as T;
   } else {
-    console.log({ err: data });
+    logger.error('error_during_request', { err: data });
     throw new Error(`Error during getting user info`);
   }
 };
@@ -63,9 +66,9 @@ export class GoogleHandler implements OauthHandler {
     return url.toString();
   }
 
-  public async handleRedirectParams(
+  public handleRedirectParams = async (
     params: RedirectParams
-  ): Promise<RedirectParams> {
+  ): Promise<RedirectParams> => {
     if (params.access_token && !params.id_token) {
       return {
         ...params,
@@ -74,7 +77,7 @@ export class GoogleHandler implements OauthHandler {
     } else {
       return { ...params };
     }
-  }
+  };
 
   public async getUserInfo(accessToken: string): Promise<UserInfo> {
     try {
@@ -85,6 +88,10 @@ export class GoogleHandler implements OauthHandler {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  public async cleanup(): Promise<void> {
+    return;
   }
 }
 
@@ -117,9 +124,9 @@ export class RedditHandler implements OauthHandler {
     return url.toString();
   }
 
-  public async handleRedirectParams(
+  public handleRedirectParams = async (
     params: RedirectParams
-  ): Promise<RedirectParams> {
+  ): Promise<RedirectParams> => {
     if (params.access_token && !params.id_token) {
       return {
         ...params,
@@ -128,7 +135,7 @@ export class RedditHandler implements OauthHandler {
     } else {
       return { ...params };
     }
-  }
+  };
 
   public async getUserInfo(accessToken: string): Promise<UserInfo> {
     try {
@@ -139,6 +146,10 @@ export class RedditHandler implements OauthHandler {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  public async cleanup(): Promise<void> {
+    return;
   }
 }
 
@@ -172,9 +183,9 @@ export class DiscordHandler implements OauthHandler {
     return url.toString();
   }
 
-  public async handleRedirectParams(
+  public handleRedirectParams = async (
     params: RedirectParams
-  ): Promise<RedirectParams> {
+  ): Promise<RedirectParams> => {
     if (params.access_token && !params.id_token) {
       return {
         ...params,
@@ -183,7 +194,7 @@ export class DiscordHandler implements OauthHandler {
     } else {
       return { ...params };
     }
-  }
+  };
 
   public async getUserInfo(accessToken: string): Promise<UserInfo> {
     try {
@@ -201,6 +212,10 @@ export class DiscordHandler implements OauthHandler {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  public async cleanup(): Promise<void> {
+    return;
   }
 }
 
@@ -243,9 +258,9 @@ export class TwitchHandler implements OauthHandler {
     return url.toString();
   }
 
-  public async handleRedirectParams(
+  public handleRedirectParams = async (
     params: RedirectParams
-  ): Promise<RedirectParams> {
+  ): Promise<RedirectParams> => {
     if (params.access_token && !params.id_token) {
       return {
         ...params,
@@ -254,7 +269,7 @@ export class TwitchHandler implements OauthHandler {
     } else {
       return { ...params };
     }
-  }
+  };
 
   public async getUserInfo(accessToken: string): Promise<UserInfo> {
     try {
@@ -273,6 +288,10 @@ export class TwitchHandler implements OauthHandler {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  public async cleanup(): Promise<void> {
+    return;
   }
 }
 
@@ -314,16 +333,16 @@ export class GithubHandler implements OauthHandler {
     return data.accessToken;
   }
 
-  public async handleRedirectParams(
+  public handleRedirectParams = async (
     params: RedirectParams
-  ): Promise<RedirectParams> {
+  ): Promise<RedirectParams> => {
     if (!params.code) {
       throw new Error('Expected `code` from github hash params');
     }
     const accessToken = await this.getTokenFromCode(this.appID, params.code);
 
     return { ...params, access_token: accessToken, id_token: accessToken };
-  }
+  };
 
   public async getUserInfo(accessToken: string): Promise<UserInfo> {
     try {
@@ -339,6 +358,10 @@ export class GithubHandler implements OauthHandler {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  public async cleanup(): Promise<void> {
+    return;
   }
 }
 
@@ -357,7 +380,6 @@ interface TwitterInternalResponse {
 }
 
 export class TwitterHandler implements OauthHandler {
-  private url: string;
   private oauthToken: string;
   private sigUrl = 'https://oauth.arcana.network/oauth/twitter';
   private oauthTokenSecret: string;
@@ -414,24 +436,41 @@ export class TwitterHandler implements OauthHandler {
     }
   }
 
-  public async handleRedirectParams(
+  public handleRedirectParams = async (
     params: RedirectParams
-  ): Promise<RedirectParams> {
+  ): Promise<RedirectParams> => {
     if (params.oauth_token && params.oauth_verifier) {
       const oauthTokenVerified = await this.getAccessToken({
         oauth_token: params.oauth_token,
         oauth_verifier: params.oauth_verifier,
       });
-      params.access_token = oauthTokenVerified.oauth_token;
+      this.oauthToken = oauthTokenVerified.oauth_token;
       this.oauthTokenSecret = oauthTokenVerified.oauth_token_secret;
       params.id_token = [
-        params.access_token,
+        this.oauthToken,
         this.oauthTokenSecret,
         this.appID,
       ].join(':');
-      return { ...params, ...oauthTokenVerified };
+      return {
+        ...params,
+        access_token: this.oauthToken,
+        ...oauthTokenVerified,
+      };
     } else {
       return { ...params };
+    }
+  };
+
+  public async cleanup(): Promise<void> {
+    try {
+      const url = new URL(`${this.sigUrl}/${this.appID}/invalidateToken`);
+      url.searchParams.append('oauth_token', this.oauthToken);
+      url.searchParams.append('oauth_token_secret', this.oauthTokenSecret);
+      await request<{ success: boolean }>(url.toString());
+    } catch (err) {
+      const logger = getLogger('twitter');
+
+      logger.error('error_cleanup_twitter', { err });
     }
   }
 }

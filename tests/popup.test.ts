@@ -1,4 +1,5 @@
 import Popup from '../src/popup';
+import { RedirectParams } from '../src/utils';
 
 function createMockWindowResponse(params) {
   const mockedOpen = jest.fn();
@@ -28,8 +29,10 @@ function createMockWindowResponse(params) {
   };
 }
 describe('Popup handler', () => {
-  const popup = new Popup('url');
-
+  const popup = new Popup('url', 'state');
+  const modifier = async (p: RedirectParams) => {
+    return p;
+  };
   test('should call window open function', () => {
     const { open } = createMockWindowResponse({});
     popup.open();
@@ -50,7 +53,7 @@ describe('Popup handler', () => {
         state: 'some_state',
       },
     });
-    popup.getWindowResponse();
+    popup.getWindowResponse(modifier);
     expect(add).toBeCalledTimes(1);
     expect(add).toBeCalledWith('message', expect.any(Function), false);
     expect(remove).toBeCalledTimes(1);
@@ -71,7 +74,7 @@ describe('Popup handler', () => {
         },
       },
     });
-    expect(popup.getWindowResponse()).resolves.toEqual({
+    expect(popup.getWindowResponse(modifier)).resolves.toEqual({
       state: popup['id'],
       id_token: 'token',
     });
@@ -95,7 +98,7 @@ describe('Popup handler', () => {
         },
       },
     });
-    expect(popup.getWindowResponse()).rejects.toEqual('state mismatch');
+    expect(popup.getWindowResponse(modifier)).rejects.toEqual('state mismatch');
     expect(add).toBeCalledTimes(1);
     expect(add).toBeCalledWith('message', expect.any(Function), false);
     expect(remove).toBeCalledTimes(1);
@@ -114,7 +117,9 @@ describe('Popup handler', () => {
         state: 'some_state',
       },
     });
-    expect(popup.getWindowResponse()).resolves.toEqual({ id_token: 'token' });
+    expect(popup.getWindowResponse(modifier)).resolves.toEqual({
+      id_token: 'token',
+    });
     expect(add).toBeCalledTimes(1);
     expect(add).toBeCalledWith('message', expect.any(Function), false);
     expect(remove).toBeCalledTimes(1);
@@ -133,7 +138,9 @@ describe('Popup handler', () => {
         state: 'some_state',
       },
     });
-    expect(popup.getWindowResponse()).rejects.toEqual('error: error_desc');
+    expect(popup.getWindowResponse(modifier)).rejects.toEqual(
+      'error: error_desc'
+    );
     expect(add).toBeCalledTimes(1);
     expect(add).toBeCalledWith('message', expect.any(Function), false);
     expect(remove).toBeCalledTimes(1);
@@ -149,7 +156,7 @@ describe('Popup handler', () => {
     open.mockReturnValue({ closed: true });
     popup.open();
     try {
-      await popup.getWindowResponse();
+      await popup.getWindowResponse(modifier);
     } catch (e) {
       expect(e).toEqual('popup closed by user');
     }

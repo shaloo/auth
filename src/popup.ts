@@ -1,10 +1,10 @@
-import { generateID, RedirectParams } from './utils';
+import { RedirectParams } from './utils';
 
 class Popup {
   private window: Window | null;
   private id: string;
-  constructor(public url: string) {
-    this.id = generateID();
+  constructor(public url: string, state: string) {
+    this.id = state;
   }
 
   public open(): void {
@@ -12,7 +12,9 @@ class Popup {
     this.window = window.open(this.url, '_blank', windowFeatures);
   }
 
-  public getWindowResponse(): Promise<RedirectParams> {
+  public getWindowResponse(
+    modifier: (p: RedirectParams) => Promise<RedirectParams>
+  ): Promise<RedirectParams> {
     return new Promise((resolve, reject) => {
       let safeClose = false;
       const closedMonitor = setInterval(() => {
@@ -32,7 +34,8 @@ class Popup {
           return reject(`state mismatch`);
         }
         if (status === 'success' && !error) {
-          return resolve(params);
+          const modifiedParams = await modifier(params);
+          return resolve(modifiedParams);
         } else {
           return reject(`${error}: ${params.error_description}`);
         }

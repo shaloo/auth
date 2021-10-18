@@ -8,28 +8,30 @@ import {
   GithubHandler,
   TwitterHandler,
 } from './oauth';
+import * as Sentry from '@sentry/browser';
+import { getLogger } from './logger';
 
 export function getLoginHandler(
   loginType: LoginType,
   appID: string
 ): OauthHandler {
   switch (loginType) {
-    case LoginType.Google: {
+    case LoginType.google: {
       return new GoogleHandler(appID);
     }
-    case LoginType.Twitch: {
+    case LoginType.twitch: {
       return new TwitchHandler(appID);
     }
-    case LoginType.Discord: {
+    case LoginType.discord: {
       return new DiscordHandler(appID);
     }
-    case LoginType.Reddit: {
+    case LoginType.reddit: {
       return new RedditHandler(appID);
     }
-    case LoginType.Github: {
+    case LoginType.github: {
       return new GithubHandler(appID);
     }
-    case LoginType.Twitter: {
+    case LoginType.twitter: {
       return new TwitterHandler(appID);
     }
   }
@@ -78,7 +80,8 @@ export const handleRedirectPage = (origin = '*'): void => {
   try {
     parseAndSendRedirectParams(window.location, origin);
   } catch (error) {
-    console.log({ error });
+    const logger = getLogger('handleRedirectPage');
+    logger.error('could not parse and send redirect params', { error });
   }
 };
 
@@ -88,12 +91,20 @@ export const parseAndSendRedirectParams = (
 ): void => {
   const params = parseHash(new URL(location.href));
   const returnParams: RedirectResponse = { status: 'success', params };
-  if (params.error) {
+
+  if (isParamsEmpty(returnParams.params)) {
+    returnParams.status = 'error';
+    returnParams.error = 'paramater list is empty';
+  } else if (params.error) {
     returnParams.status = 'error';
     returnParams.error = params.error;
   }
   window.opener?.postMessage(returnParams, origin);
   return;
+};
+
+const isParamsEmpty = (params: RedirectParams): boolean => {
+  return Object.keys(params).length === 0;
 };
 
 export const generateID = (): string => {
@@ -103,4 +114,16 @@ export const generateID = (): string => {
       .toString(36)
       .substr(2, 9)
   );
+};
+
+export const getSentryErrorReporter = (): ((m: string) => void) => {
+  Sentry.init({
+    dsn:
+      'https://d36bd0cc31cb46feb91a0c39e9b5178a@o1011868.ingest.sentry.io/6005958',
+    maxBreadcrumbs: 5,
+    debug: true,
+  });
+  return (msg: string) => {
+    Sentry.captureMessage(msg);
+  };
 };

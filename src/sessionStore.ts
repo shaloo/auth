@@ -51,6 +51,10 @@ class SessionStore {
     return item.value;
   }
 
+  public clear(): void {
+    this.store = new Map();
+  }
+
   private addHookForUnload() {
     window.addEventListener('unload', this.persist.bind(this));
   }

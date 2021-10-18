@@ -1,20 +1,21 @@
 {
-  "name": "@arcana-tech/arcana_login",
-  "version": "0.0.1",
+  "name": "@arcana_tech/arcana-login",
+  "version": "0.0.2",
   "description": "Arcana login SDK for easier social logins",
   "main": "dist/index.js",
   "scripts": {
-    "tsc": "tsc .",
+    "build": "tsc",
     "test": "jest --verbose",
     "test:coverage": "jest --coverage",
     "lint": "eslint ./src",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "prepublishOnly": "npm run build"
   },
-  "author": "",
+  "author": "makyl<makyl@newfang.io>",
   "license": "ISC",
   "dependencies": {
     "@47ng/codec": "^1.0.1",
-    "@arcana-tech/arcana_keystore": "^1.0.0"
+    "@arcana_tech/arcana-keystore": "^0.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

@@ -28,17 +28,17 @@ function createMockWindow(href: string) {
 
 describe('getInfoHandler', () => {
   test('returns correct handler depending on login type', () => {
-    const gh = getLoginHandler(LoginType.Google, '');
+    const gh = getLoginHandler(LoginType.google, '');
     expect(gh instanceof GoogleHandler).toBe(true);
-    const dh = getLoginHandler(LoginType.Discord, '');
+    const dh = getLoginHandler(LoginType.discord, '');
     expect(dh instanceof DiscordHandler).toBe(true);
-    const rh = getLoginHandler(LoginType.Reddit, '');
+    const rh = getLoginHandler(LoginType.reddit, '');
     expect(rh instanceof RedditHandler).toBe(true);
-    const th = getLoginHandler(LoginType.Twitch, '');
+    const th = getLoginHandler(LoginType.twitch, '');
     expect(th instanceof TwitchHandler).toBe(true);
-    const twh = getLoginHandler(LoginType.Twitter, '');
+    const twh = getLoginHandler(LoginType.twitter, '');
     expect(twh instanceof TwitterHandler).toBe(true);
-    const gih = getLoginHandler(LoginType.Github, '');
+    const gih = getLoginHandler(LoginType.github, '');
     expect(gih instanceof GithubHandler).toBe(true);
   });
 });
@@ -79,6 +79,17 @@ describe('parseAndSendRedirectParams', () => {
     expect(postMessage).toBeCalledTimes(1);
     expect(postMessage).toBeCalledWith(
       { error: 'some_error', params: { error: 'some_error' }, status: 'error' },
+      '*'
+    );
+  });
+  test('should send error on empty valid params', () => {
+    const { postMessage } = createMockWindow(
+      'https://example.com/#something=some_error'
+    );
+    handleRedirectPage('*');
+    expect(postMessage).toBeCalledTimes(1);
+    expect(postMessage).toBeCalledWith(
+      { error: 'paramater list is empty', params: {}, status: 'error' },
       '*'
     );
   });

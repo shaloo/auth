@@ -13,8 +13,8 @@ const serverConfig = () => {
           use: {
             loader: 'ts-loader',
             options: {
-              configFile: 'tsconfig.json',
-              onlyCompileBundledFiles: true,
+              // configFile: 'tsconfig.json',
+              // onlyCompileBundledFiles: true,
             },
           },
           exclude: [/node_modules/],
