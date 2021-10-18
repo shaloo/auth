@@ -1,55 +1,95 @@
 # Arcana Login
+Arcana SDK to perform social logins on your app.
 
-SDK to perform login on your app.
+## Installation
 
-## Introduction
+### Using NPM/Yarn
 
-
-## Usage
-
-### Add to index.html
-
-```html
-<script src="../dist_bundle/arcana_login.js"></script>
-```
-
-### Create button
-
-```html
-<button id="google-login">Continue with google</button>
-
+```sh
+npm install --save @arcana_tech/arcana-login
+yarn add @arcana_tech/arcana-login
 ```
 
 
-### Attach handler
+### Using built source
+
+```html
+<script src="<path-to>/arcana-login.js"></script>
+```
+
+### Initialise the SDK
 
 ```js
-const googleLoginBtn = document.getElementById('google-login')
+const { AuthProvider } = window.arcana_login;
+// import { AuthProvider } from '@arcana_tech/arcana-login';
 
-googleLoginBtn.addEventListener('click', () => {
-    // Initialize SDK
-    // Get pvt key
+const arcanaAuth = new AuthProvider({
+   appID: <appID>,
+   oauthCreds: [{
+    type: 'google',
+    clientID: '',
+    redirectUrl: ''
+   },
+   {
+    type: 'twitter',
+    clientID: '',
+    redirectUrl: ''
+   },
+   {
+    type: 'github',
+    clientID: '',
+    redirectUrl: ''
+   },
+   {
+    type: 'discord',
+    clientID: '',
+    redirectUrl: ''
+   }]
 })
 
 ```
 
-
-### Initialize
+### On redirect Page
 
 ```js
-const { ArcanaLogin } = window.arcana_login;
+const { AuthProvider } = window.arcana_login;
 
-const arcanaLogin = new ArcanaLogin({
-   loginType: "google", // discord, google, reddit and twitch
-   verifierId: "<verifier_address>",
-   clientId: "513082793372-5f9ejcvtjgqvlngr9hndmnm0r372qn89.apps.googleusercontent.com",
-   redirectUri: <redirectUri>,
-})
-
+window.onload = () => {
+  AuthProvider.handleRedirectPage(<origin>);
+};
 ```
 
-### Get private key
+### Initiate login and get private key
 
 ```js
-const pk = await arcanaLogin.doLogin();
+const pk = await arcanaAuth.signIn(<loginType>);
+```
+
+### Get user info
+
+```js
+const userInfo = await arcanaAuth.getUserInfo(<loginType>);
+```
+
+### Get public  key
+
+```js
+const userInfo = await arcanaAuth.getPublicKey({
+  verifier: <loginType>,
+  id: <email | username>,
+});
+```
+
+### Check if user already logged in
+```js
+const isLoggedIn = await arcanaAuth.isLoggedIn(<loginType>)
+if (isLoggedIn) {
+	const pk = await arcanaAuth.signIn(<loginType>)
+	// this wont go through the login flow again
+	const userInfo = await arcanaAuth.getUserInfo(<loginType>)
+}
+
+// To clear login session
+arcanaAuth.clearSession()
+
 ```

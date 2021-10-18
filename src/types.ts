@@ -1,6 +1,15 @@
 export enum LoginType {
-    Google = "google",
-    Reddit = "reddit",
-    Discord = "discord",
-    Twitch = "twitch",
+  google = 'google',
+  reddit = 'reddit',
+  discord = 'discord',
+  twitch = 'twitch',
+  github = 'github',
+  twitter = 'twitter',
+}
+
+export interface UserInfo {
+  id: string;
+  email?: string;
+  name?: string;
+  picture?: string;
 }

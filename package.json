@@ -1,17 +1,38 @@
 {
-  "name": "arcana-login",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "@arcana_tech/arcana-login",
+  "version": "0.0.2",
+  "description": "Arcana login SDK for easier social logins",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "test": "jest --verbose",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint ./src",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run build"
   },
-  "author": "",
+  "author": "makyl<makyl@newfang.io>",
   "license": "ISC",
   "dependencies": {
-    "dkg_client": "/Users/makyl/Documents/repositories/dkg_client"
+    "@47ng/codec": "^1.0.1",
+    "@arcana_tech/arcana-keystore": "^0.0.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
+    "@babel/preset-typescript": "^7.15.0",
+    "@peculiar/webcrypto": "^1.1.7",
+    "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.29.2",
+    "@typescript-eslint/parser": "^4.29.2",
+    "babel-jest": "^27.0.6",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.24.0",
+    "husky": "^7.0.2",
+    "jest": "^27.0.6",
+    "jest-environment-jsdom": "^27.2.4",
+    "jest-fetch-mock": "^3.0.3",
     "ts-loader": "^5.3.3",
     "typescript": "^4.2.4",
     "webpack": "4.44.2"
