@@ -157,13 +157,15 @@ interface DiscordUserInfoResponse {
   id: string;
   avatar: string;
   username: string;
+  email?: string;
+  verified: boolean;
 }
 
 export class DiscordHandler implements OauthHandler {
   private oauthUrl = 'https://discord.com/api/oauth2/authorize';
   private responseType = 'token';
   private scope = 'identify email';
-  private userInfoUrl = 'https://discordapp.com/api/oauth2/@me';
+  private userInfoUrl = 'https://discordapp.com/api/users/@me';
 
   constructor(private appID: string) {
     return;
@@ -198,16 +200,20 @@ export class DiscordHandler implements OauthHandler {
 
   public async getUserInfo(accessToken: string): Promise<UserInfo> {
     try {
-      const data = await request<{ user: DiscordUserInfoResponse }>(
-        this.userInfoUrl,
-        {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      );
+      const data = await request<DiscordUserInfoResponse>(this.userInfoUrl, {
+        Authorization: `Bearer ${accessToken}`,
+      });
+      if (data.verified && data.email) {
+        return {
+          id: data.email,
+          name: data.username,
+          picture: data.avatar,
+        };
+      }
       return {
-        id: data.user.id,
-        name: data.user.username,
-        picture: data.user.avatar,
+        id: data.id,
+        name: data.username,
+        picture: data.avatar,
       };
     } catch (e) {
       return Promise.reject(e);

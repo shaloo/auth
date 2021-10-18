@@ -137,12 +137,19 @@ describe('TwitchHandler', () => {
 describe('DiscordHandler', () => {
   const h = new DiscordHandler('');
 
-  test('returns expected user info', async () => {
-    const id = 'foo@bar.com';
-    fetchMock.mockResponse(JSON.stringify({ user: { id } }));
+  test('returns expected email id if verified', async () => {
+    const email = 'foo@bar.com';
+    fetchMock.mockResponse(JSON.stringify({ verified: true, email, id: 1 }));
     const res = await h.getUserInfo('test_access_token');
     expect(fetchMock).toHaveBeenCalled();
-    expect(res.id).toBe(id);
+    expect(res.id).toBe(email);
+  });
+  test('returns expected user id if no email or not verified', async () => {
+    const email = 'foo@bar.com';
+    fetchMock.mockResponse(JSON.stringify({ verified: false, email, id: 1 }));
+    const res = await h.getUserInfo('test_access_token');
+    expect(fetchMock).toHaveBeenCalled();
+    expect(res.id).toBe(1);
   });
 
   test('returns expected auth url', async () => {
