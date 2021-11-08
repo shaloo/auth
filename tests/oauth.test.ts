@@ -112,7 +112,7 @@ describe('TwitchHandler', () => {
       redirectUri: 'redirectUri',
     });
     expect(res).toBe(
-      'https://id.twitch.tv/oauth2/authorize?client_id=clientID&redirect_uri=redirectUri&state=a&scope=openid+user%3Aread%3Aemail&response_type=token&claims=%7B%22id_token%22%3A%7B%22email%22%3Anull%2C%22email_verified%22%3Anull%7D%2C%22userinfo%22%3A%7B%22email%22%3Anull%2C%22email_verified%22%3Anull%7D%7D'
+      'https://id.twitch.tv/oauth2/authorize?client_id=clientID&redirect_uri=redirectUri&state=a&scope=openid+user%3Aread%3Aemail&response_type=token&claims=%7B%22id_token%22%3A%7B%22email%22%3Anull%2C%22email_verified%22%3Anull%7D%2C%22userinfo%22%3A%7B%22email%22%3Anull%2C%22email_verified%22%3Anull%7D%7D&force_verify=true'
     );
   });
 

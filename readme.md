@@ -25,25 +25,22 @@ const { AuthProvider } = window.arcana_login;
 
 const arcanaAuth = new AuthProvider({
    appID: <appID>,
+   redirectUri:'',
    oauthCreds: [{
     type: 'google',
     clientID: '',
-    redirectUrl: ''
    },
    {
     type: 'twitter',
     clientID: '',
-    redirectUrl: ''
    },
    {
     type: 'github',
     clientID: '',
-    redirectUrl: ''
    },
    {
     type: 'discord',
     clientID: '',
-    redirectUrl: ''
    }]
 })
 
@@ -59,16 +56,28 @@ window.onload = () => {
 };
 ```
 
-### Initiate login and get private key
+### Initiate login
 
 ```js
-const pk = await arcanaAuth.signIn(<loginType>);
+await arcanaAuth.login(<loginType>);
 ```
 
 ### Get user info
 
 ```js
-const userInfo = await arcanaAuth.getUserInfo(<loginType>);
+const userInfo = arcanaAuth.getUserInfo();
+/* 
+  UserInfo: {
+    loginType: 'google',
+    userInfo: {
+      id: 'abc@example.com',
+      name: 'ABC DEF',
+      email: '',
+      picture: ''
+    },
+    privateKey: ''
+  }
+*/
 ```
 
 ### Get public  key
@@ -82,16 +91,17 @@ const userInfo = await arcanaAuth.getPublicKey({
 
 ### Check if user already logged in
 ```js
-const isLoggedIn = await arcanaAuth.isLoggedIn(<loginType>);
-if (isLoggedIn) {
-	const pk = await arcanaAuth.signIn(<loginType>);
-	// this wont go through the login flow again
-	const userInfo = await arcanaAuth.getUserInfo(<loginType>);
+const loggedIn = arcanaAuth.isLoggedIn();
+if (!loggedIn) {
+  await arcanaAuth.login(<loginType>);
 }
+const userInfo = arcanaAuth.getUserInfo()
+```
 
-// To clear login session
-arcanaAuth.clearSession();
+### Clear login session
 
+```js
+await arcanaAuth.logout();
 ```
 
 ### Variables

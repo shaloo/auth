@@ -40,7 +40,7 @@ describe('Popup handler', () => {
     expect(open).toBeCalledWith(
       'url',
       '_blank',
-      'titlebar=0toolbar=0status=0menubar=0resizable=0height=700width=1200'
+      'titlebar=0,toolbar=0,status=0,menubar=0,resizable=0,height=700,width=1200'
     );
     open.mockRestore();
   });

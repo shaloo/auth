@@ -1,6 +1,7 @@
 /** * @jest-environment ./tests/setupEnv.js */
 
 import SessionStore, { split, join } from '../src/sessionStore';
+import { b64 } from '../src/codec';
 
 describe('Session store split/join', () => {
   test('Split / Join isomorphism', () => {

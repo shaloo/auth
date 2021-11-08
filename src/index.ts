@@ -1,4 +1,4 @@
-import { LoginType } from './types';
+import { LoginType, Store, StoredUserInfo } from './types';
 import {
   handleRedirectPage,
   getLoginHandler,
@@ -7,7 +7,6 @@ import {
   getSentryErrorReporter,
 } from './utils';
 import { OauthHandler } from './oauth';
-import { UserInfo } from './types';
 import SessionStore from './sessionStore';
 import Popup from './popup';
 import { KeyReconstructor } from '@arcana_tech/arcana-keystore';
@@ -21,6 +20,7 @@ import {
 
 interface InitParams {
   appID: string;
+  redirectUri?: string;
   oauthCreds: OAuthCreds[];
   network: 'test' | 'testnet';
 }
@@ -32,15 +32,7 @@ interface OAuthCreds {
 }
 
 enum StoreIndex {
-  privateKey,
-  userInfo,
-}
-
-interface Store {
-  set(key: string, value: string, expiresAt?: Date | number): void;
-  get(key: string): string | null;
-  delete(key: string): void;
-  clear(): void;
+  LOGGED_IN = 'arc.user',
 }
 
 export class AuthProvider {
@@ -65,15 +57,12 @@ export class AuthProvider {
     this.store = new SessionStore(this.params.appID);
   }
 
-  public async signIn(loginType: LoginType): Promise<{ privateKey: string }> {
-    const creds = this.getOAuthCredentials(loginType);
-    if (this.isLoggedIn(loginType)) {
-      const key = prefix(StoreIndex[StoreIndex.privateKey], loginType);
-      const privateKey = this.store.get(key);
-      if (privateKey) {
-        return { privateKey };
-      }
+  public async login(loginType: LoginType): Promise<void> {
+    if (this.checkAlreadyLoggedIn(loginType)) {
+      return;
     }
+
+    const creds = this.getOAuthCredentials(loginType);
 
     const loginHandler = getLoginHandler(loginType, this.params.appID);
 
@@ -91,6 +80,7 @@ export class AuthProvider {
     const params = await popup.getWindowResponse(
       loginHandler.handleRedirectParams
     );
+
     try {
       const userInfo = await this.getInfoFromHandler(loginHandler, params);
       const privateKey = await this.getUserPrivateKey(
@@ -98,10 +88,7 @@ export class AuthProvider {
         params.id_token,
         loginType
       );
-
-      this.setKeyAndUserInfo(privateKey, userInfo, loginType);
-
-      return { privateKey };
+      this.setKeyAndUserInfo({ privateKey, userInfo, loginType });
     } catch (err) {
       return Promise.reject(err);
     } finally {
@@ -109,28 +96,23 @@ export class AuthProvider {
     }
   }
 
-  public async getUserInfo(loginType: LoginType): Promise<UserInfo> {
-    const key = prefix(StoreIndex[StoreIndex.userInfo], loginType);
-    const userInfo = this.store.get(key);
+  public getUserInfo(): StoredUserInfo {
+    const userInfo = this.store.get(StoreIndex.LOGGED_IN);
     if (userInfo) {
-      const info: UserInfo = JSON.parse(userInfo);
+      const info: StoredUserInfo = JSON.parse(userInfo);
       return info;
     } else {
-      this.logger.error('Error: getUserInfo', { loginType });
+      this.logger.error('Error: getUserInfo');
       throw new Error('Please initialize the sdk before fetching user info.');
     }
   }
 
-  public isLoggedIn(loginType: LoginType): boolean {
-    const key = prefix(StoreIndex[StoreIndex.privateKey], loginType);
-    const privateKey = this.store.get(key);
-    if (privateKey) {
-      return true;
-    }
-    return false;
+  public isLoggedIn(): boolean {
+    const userExists = this.store.get(StoreIndex.LOGGED_IN);
+    return userExists ? true : false;
   }
 
-  public clearSession(): void {
+  public logout(): void {
     this.store.clear();
   }
 
@@ -144,22 +126,30 @@ export class AuthProvider {
     return this.keyReconstructor.getPublicKey({ id, verifier });
   }
 
-  private setKeyAndUserInfo(
-    pk: string,
-    userInfo: UserInfo,
-    loginType: LoginType
-  ) {
-    this.store.set(prefix(StoreIndex[StoreIndex.privateKey], loginType), pk);
-    this.store.set(
-      prefix(StoreIndex[StoreIndex.userInfo], loginType),
-      JSON.stringify(userInfo)
-    );
+  private checkAlreadyLoggedIn(loginType: LoginType): boolean {
+    if (this.isLoggedIn()) {
+      const storedUserInfo = this.getUserInfo();
+      if (storedUserInfo.loginType === loginType) {
+        return true;
+      }
+    }
+    return false;
   }
+
+  private setKeyAndUserInfo(userInfo: StoredUserInfo) {
+    this.store.set(StoreIndex.LOGGED_IN, JSON.stringify(userInfo));
+  }
+
   private getOAuthCredentials(loginType: LoginType): OAuthCreds {
     for (const creds of this.params.oauthCreds) {
       if (creds.type == loginType.valueOf()) {
         if (creds.clientId && creds.redirectUri) {
           return creds;
+        } else if (creds.clientId && this.params.redirectUri) {
+          return {
+            ...creds,
+            redirectUri: this.params.redirectUri,
+          };
         }
       }
     }
@@ -202,7 +192,3 @@ export class AuthProvider {
     }
   }
 }
-
-const prefix = (s: string, prefix: string): string => {
-  return `${prefix}:${s}`;
-};

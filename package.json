@@ -1,6 +1,6 @@
 {
   "name": "@arcana_tech/arcana-login",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "Arcana login SDK for easier social logins",
   "main": "dist/index.js",
   "scripts": {
@@ -14,8 +14,8 @@
   "author": "makyl<makyl@newfang.io>",
   "license": "ISC",
   "dependencies": {
-    "@47ng/codec": "^1.0.1",
-    "@arcana_tech/arcana-keystore": "^0.0.1"
+    "@arcana_tech/arcana-keystore": "^0.0.11",
+    "@stablelib/base64": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

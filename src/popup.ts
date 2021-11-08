@@ -70,11 +70,11 @@ const popupFeatures: { [key: string]: number } = {
 };
 
 const getWindowFeatures = (): string => {
-  let f = '';
+  const f: string[] = [];
   for (const feature in popupFeatures) {
-    f += `${feature}=${popupFeatures[feature]}`;
+    f.push(`${feature}=${popupFeatures[feature]}`);
   }
-  return f;
+  return f.join(',');
 };
 
 export default Popup;

@@ -13,3 +13,16 @@ export interface UserInfo {
   name?: string;
   picture?: string;
 }
+
+export interface StoredUserInfo {
+  loginType: LoginType;
+  userInfo: UserInfo;
+  privateKey: string;
+}
+
+export interface Store {
+  set(key: string, value: string, expiresAt?: Date | number): void;
+  get(key: string): string | null;
+  delete(key: string): void;
+  clear(): void;
+}

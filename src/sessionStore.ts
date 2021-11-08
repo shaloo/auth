@@ -1,4 +1,4 @@
-import { b64, utf8 } from '@47ng/codec';
+import { b64, utf8 } from './codec';
 
 interface StoreValue {
   version: 1;

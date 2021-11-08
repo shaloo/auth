@@ -1,7 +1,7 @@
 import { getLogger } from './logger';
 import { UserInfo } from './types';
 import { generateID, RedirectParams } from './utils';
-
+import Config from './config.json';
 interface OauthParams {
   redirectUri: string;
   state: string;
@@ -261,6 +261,7 @@ export class TwitchHandler implements OauthHandler {
     url.searchParams.append('scope', this.scope);
     url.searchParams.append('response_type', this.responseType);
     url.searchParams.append('claims', this.claims);
+    url.searchParams.append('force_verify', 'true');
     return url.toString();
   }
 
@@ -311,7 +312,7 @@ interface GithubUserInfoResponse {
 export class GithubHandler implements OauthHandler {
   private url = 'https://api.github.com/user';
   private oauthUrl = 'https://github.com/login/oauth/authorize';
-  private sigUrl = 'https://oauth.arcana.network/oauth/github';
+  private sigUrl = `${Config.signatureUrl}/github`;
   private responseType = 'token id_token';
   private scope = 'read:user user:email';
   constructor(private appID: string) {
@@ -387,7 +388,7 @@ interface TwitterInternalResponse {
 
 export class TwitterHandler implements OauthHandler {
   private oauthToken: string;
-  private sigUrl = 'https://oauth.arcana.network/oauth/twitter';
+  private sigUrl = `${Config.signatureUrl}/twitter`;
   private oauthTokenSecret: string;
   private oauthUrl = 'https://api.twitter.com/oauth/authorize?oauth_token=';
 
