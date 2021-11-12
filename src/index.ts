@@ -52,6 +52,7 @@ export class AuthProvider {
   private store: Store;
   private keyReconstructor: KeyReconstructor;
   private logger: Logger;
+  private appAddress = '';
   constructor(initParams: InitParams) {
     this.params = initParams;
     this.logger = getLogger('AuthProvider');
@@ -70,16 +71,11 @@ export class AuthProvider {
       return;
     }
 
-    const appAddress = await getAppAddress(this.params.appID);
-
-    this.keyReconstructor = new KeyReconstructor({
-      appID: appAddress,
-      network: this.params.network || 'test',
-    });
+    await this.initKeyReconstructor();
 
     const creds = this.getOAuthCredentials(loginType);
 
-    const loginHandler = getLoginHandler(loginType, appAddress);
+    const loginHandler = getLoginHandler(loginType, this.appAddress);
 
     const state = generateID();
 
@@ -131,14 +127,32 @@ export class AuthProvider {
     this.store.clear();
   }
 
-  public getPublicKey({
+  public async getPublicKey({
     id,
     verifier,
   }: {
     id: string;
     verifier: LoginType;
   }): Promise<{ X: string; Y: string }> {
+    await this.initKeyReconstructor();
     return this.keyReconstructor.getPublicKey({ id, verifier });
+  }
+
+  private async initKeyReconstructor(): Promise<void> {
+    await this.setAppAddress();
+    if (!this.keyReconstructor) {
+      this.keyReconstructor = new KeyReconstructor({
+        appID: this.appAddress,
+        network: this.params.network || 'test',
+      });
+    }
+  }
+
+  private async setAppAddress(): Promise<void> {
+    if (!this.appAddress) {
+      const appAddress = await getAppAddress(this.params.appID);
+      this.appAddress = appAddress;
+    }
   }
 
   private checkAlreadyLoggedIn(loginType: LoginType): boolean {
