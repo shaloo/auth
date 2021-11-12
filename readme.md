@@ -1,29 +1,30 @@
-# Arcana Login
-Arcana SDK to perform social logins on your app.
+# Arcana Auth
+Arcana SDK to perform logins on your app.
 
 ## Installation
 
 ### Using NPM/Yarn
 
 ```sh
-npm install --save @arcana_tech/arcana-login
-yarn add @arcana_tech/arcana-login
+npm install --save @arcana/auth
+yarn add @arcana/auth
 ```
 
 
 ### Using built source
 
 ```html
-<script src="<path-to>/arcana_login.js"></script>
+<script src="<path-to>/auth.js"></script>
 ```
 
 ### Initialise the SDK
 
 ```js
-const { AuthProvider } = window.arcana_login;
-// import { AuthProvider } from '@arcana-tech/arcana-login';
+const { AuthProvider } = window.arcana.auth;
+// or
+import { AuthProvider } from '@arcana/auth';
 
-const arcanaAuth = new AuthProvider({
+const auth = new AuthProvider({
    appID: <appID>,
    redirectUri:'',
    oauthCreds: [{
@@ -49,7 +50,7 @@ const arcanaAuth = new AuthProvider({
 ### On redirect Page
 
 ```js
-const { AuthProvider } = window.arcana_login;
+const { AuthProvider } = window.arcanaAuth;
 
 window.onload = () => {
   AuthProvider.handleRedirectPage(<origin>);
@@ -59,13 +60,13 @@ window.onload = () => {
 ### Initiate login
 
 ```js
-await arcanaAuth.login(<loginType>);
+await auth.loginWithSocial(<loginType>);
 ```
 
 ### Get user info
 
 ```js
-const userInfo = arcanaAuth.getUserInfo();
+const userInfo = auth.getUserInfo();
 /* 
   UserInfo: {
     loginType: 'google',
@@ -83,7 +84,7 @@ const userInfo = arcanaAuth.getUserInfo();
 ### Get public  key
 
 ```js
-const userInfo = await arcanaAuth.getPublicKey({
+const userInfo = await auth.getPublicKey({
   verifier: <loginType>,
   id: <email | username>,
 });
@@ -91,17 +92,17 @@ const userInfo = await arcanaAuth.getPublicKey({
 
 ### Check if user already logged in
 ```js
-const loggedIn = arcanaAuth.isLoggedIn();
+const loggedIn = auth.isLoggedIn();
 if (!loggedIn) {
-  await arcanaAuth.login(<loginType>);
+  await auth.loginWithSocial(<loginType>);
 }
-const userInfo = arcanaAuth.getUserInfo()
+const userInfo = auth.getUserInfo()
 ```
 
 ### Clear login session
 
 ```js
-await arcanaAuth.logout();
+await auth.logout();
 ```
 
 ### Variables

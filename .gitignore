@@ -2,3 +2,4 @@
 /dist_bundle/
 /dist/
 .DS_Store
+/types/

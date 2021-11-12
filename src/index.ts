@@ -9,7 +9,7 @@ import {
 import { OauthHandler } from './oauth';
 import SessionStore from './sessionStore';
 import Popup from './popup';
-import { KeyReconstructor } from '@arcana_tech/arcana-keystore';
+import { KeyReconstructor } from '@arcana/keystore';
 import {
   getLogger,
   Logger,
@@ -17,6 +17,7 @@ import {
   setExceptionReporter,
   setLogLevel,
 } from './logger';
+import Config from './config.json';
 
 interface InitParams {
   appID: string;
@@ -35,6 +36,16 @@ enum StoreIndex {
   LOGGED_IN = 'arc.user',
 }
 
+const getAppAddress = async (appID: string): Promise<string> => {
+  try {
+    const res = await fetch(`${Config.gatewayUrl}/get-address/?id=${appID}`);
+    const json: { address: string } = await res.json();
+    return json.address;
+  } catch (e) {
+    throw new Error(`Invalid appID: ${appID}`);
+  }
+};
+
 export class AuthProvider {
   public static handleRedirectPage = handleRedirectPage;
   private params: InitParams;
@@ -44,10 +55,7 @@ export class AuthProvider {
   constructor(initParams: InitParams) {
     this.params = initParams;
     this.logger = getLogger('AuthProvider');
-    this.keyReconstructor = new KeyReconstructor({
-      appID: this.params.appID,
-      network: this.params.network || 'test',
-    });
+
     if (this.params.network === 'test') {
       setLogLevel(LOG_LEVEL.DEBUG);
       setExceptionReporter(getSentryErrorReporter());
@@ -57,14 +65,21 @@ export class AuthProvider {
     this.store = new SessionStore(this.params.appID);
   }
 
-  public async login(loginType: LoginType): Promise<void> {
+  public async loginWithSocial(loginType: LoginType): Promise<void> {
     if (this.checkAlreadyLoggedIn(loginType)) {
       return;
     }
 
+    const appAddress = await getAppAddress(this.params.appID);
+
+    this.keyReconstructor = new KeyReconstructor({
+      appID: appAddress,
+      network: this.params.network || 'test',
+    });
+
     const creds = this.getOAuthCredentials(loginType);
 
-    const loginHandler = getLoginHandler(loginType, this.params.appID);
+    const loginHandler = getLoginHandler(loginType, appAddress);
 
     const state = generateID();
 
