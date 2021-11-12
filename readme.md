@@ -50,7 +50,9 @@ const auth = new AuthProvider({
 ### On redirect Page
 
 ```js
-const { AuthProvider } = window.arcanaAuth;
+const { AuthProvider } = window.arcana.auth;
+// or
+import { AuthProvider } from '@arcana/auth';
 
 window.onload = () => {
   AuthProvider.handleRedirectPage(<origin>);
