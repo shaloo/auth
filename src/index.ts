@@ -1,115 +1,223 @@
-import { LoginType } from "./types";
-import { getOauthLoginUrl, OauthResponseHandler } from "./utils";
-import { getPrivateKey } from "dkg_client";
+import { LoginType, Store, StoredUserInfo } from './types';
+import {
+  handleRedirectPage,
+  getLoginHandler,
+  RedirectParams,
+  generateID,
+  getSentryErrorReporter,
+} from './utils';
+import { OauthHandler } from './oauth';
+import SessionStore from './sessionStore';
+import Popup from './popup';
+import { KeyReconstructor } from '@arcana/keystore';
+import {
+  getLogger,
+  Logger,
+  LOG_LEVEL,
+  setExceptionReporter,
+  setLogLevel,
+} from './logger';
+import Config from './config.json';
 
 interface InitParams {
-  loginType: LoginType;
-  verifierId: string;
+  appID: string;
+  redirectUri?: string;
+  oauthCreds: OAuthCreds[];
+  network: 'test' | 'testnet';
+}
+
+interface OAuthCreds {
+  type: LoginType;
   clientId: string;
   redirectUri: string;
 }
 
-interface HashParams {
-  access_token: string;
-  id_token: string;
+enum StoreIndex {
+  LOGGED_IN = 'arc.user',
 }
 
-export class ArcanaLogin {
+const getAppAddress = async (appID: string): Promise<string> => {
+  try {
+    const res = await fetch(`${Config.gatewayUrl}/get-address/?id=${appID}`);
+    const json: { address: string } = await res.json();
+    return json.address;
+  } catch (e) {
+    throw new Error(`Invalid appID: ${appID}`);
+  }
+};
+
+export class AuthProvider {
+  public static handleRedirectPage = handleRedirectPage;
   private params: InitParams;
-  private window: Window;
-  private userInfo: { id: string; email?: string; name?: string };
-  private id: string;
-  private privateKey: string = "";
+  private store: Store;
+  private keyReconstructor: KeyReconstructor;
+  private logger: Logger;
+  private appAddress = '';
   constructor(initParams: InitParams) {
     this.params = initParams;
+
+    if (this.params.network === 'test') {
+      setLogLevel(LOG_LEVEL.DEBUG);
+      setExceptionReporter(getSentryErrorReporter());
+    } else {
+      setLogLevel(LOG_LEVEL.NOLOGS);
+    }
+    this.logger = getLogger('AuthProvider');
+    this.store = new SessionStore(this.params.appID);
   }
 
-  public async doLogin() {
-    this.id = generateID();
-    const url = getOauthLoginUrl({
-      loginType: this.params.loginType,
-      clientId: this.params.clientId,
-      redirectUri: this.params.redirectUri,
-      state: this.id,
+  public async loginWithSocial(loginType: LoginType): Promise<void> {
+    if (this.checkAlreadyLoggedIn(loginType)) {
+      return;
+    }
+
+    await this.initKeyReconstructor();
+
+    const creds = this.getOAuthCredentials(loginType);
+
+    const loginHandler = getLoginHandler(loginType, this.appAddress);
+
+    const state = generateID();
+
+    const url = await loginHandler.getAuthUrl({
+      clientID: creds.clientId,
+      redirectUri: creds.redirectUri,
+      state,
     });
-    const windowFeatures = "resizable=no,height=700,width=1200";
-    const win = window.open(url, "_blank", windowFeatures);
-    if (win) {
-        this.window = win;
-        const response = await this.handleWindowResponse(win, this.id);
-        return response;
+
+    const popup = new Popup(url, state);
+    popup.open();
+
+    const params = await popup.getWindowResponse(
+      loginHandler.handleRedirectParams
+    );
+
+    try {
+      const userInfo = await this.getInfoFromHandler(loginHandler, params);
+      const privateKey = await this.getUserPrivateKey(
+        userInfo.id,
+        params.id_token,
+        loginType
+      );
+      this.setKeyAndUserInfo({ privateKey, userInfo, loginType });
+    } catch (err) {
+      return Promise.reject(err);
+    } finally {
+      await loginHandler.cleanup();
     }
   }
 
-  private handleWindowResponse(win: Window, id: string) {
-    return new Promise((resolve, reject) => {
-      const handler = async (event: MessageEvent) => {
-        console.log("Got message on channel");
-        console.log({ event });
-        const { status, params, error = null } = event.data;
-        if (params.state !== id) {
-          return;
-        }
-        window.removeEventListener("message", handler);
-        win.close();
-        if (status === "success") {
-          const hashParams = this.extractParamsFromLogin(params);
-          const privateKey = await this.fetchUserInfoAndPrivateKey(hashParams);
-          return resolve({ privateKey });
-        } else {
-          return reject(error);
-        }
-      };
-      window.addEventListener("message", handler, false);
-    });
-  }
-
-  private extractParamsFromLogin(params: HashParams) {
-    let { access_token, id_token = "" } = params;
-    if (!id_token) {
-      id_token = access_token;
+  public getUserInfo(): StoredUserInfo {
+    const userInfo = this.store.get(StoreIndex.LOGGED_IN);
+    if (userInfo) {
+      const info: StoredUserInfo = JSON.parse(userInfo);
+      return info;
+    } else {
+      this.logger.error('Error: getUserInfo');
+      throw new Error('Please initialize the sdk before fetching user info.');
     }
-    console.log({ extractParamsFromLogin: params });
-    return { access_token, id_token };
   }
 
-  private async fetchUserInfoAndPrivateKey({
-    id_token,
-    access_token,
-  }: HashParams) {
-    await this.getUserInfoFromToken(access_token);
-    const privateKey = await this.getUserPrivateKey(id_token);
-    this.privateKey = privateKey;
-    return this.privateKey;
+  public isLoggedIn(): boolean {
+    const userExists = this.store.get(StoreIndex.LOGGED_IN);
+    return userExists ? true : false;
   }
 
-  private async getUserInfoFromToken(accessToken: string) {
-    const oauthResponseHandler = new OauthResponseHandler({
-      loginType: this.params.loginType,
-      clientId: this.params.clientId,
-    });
-    console.log({ oauthResponseHandler });
-
-    const userInfo = await oauthResponseHandler.getUserInfo(accessToken);
-
-    console.log({ userInfo });
-
-    this.userInfo = userInfo;
+  public logout(): void {
+    this.store.clear();
   }
 
-  private async getUserPrivateKey(idToken: string): Promise<string> {
-    const { id } = this.userInfo;
-    console.log({ id, idToken });
-    const data = await getPrivateKey({
-      idToken,
-      id,
-      verifier: this.params.loginType,
-    });
-    console.log({ getUserPrivateKey: data });
-    return data.privateKey;
+  public async getPublicKey({
+    id,
+    verifier,
+  }: {
+    id: string;
+    verifier: LoginType;
+  }): Promise<{ X: string; Y: string }> {
+    await this.initKeyReconstructor();
+    return this.keyReconstructor.getPublicKey({ id, verifier });
+  }
+
+  private async initKeyReconstructor(): Promise<void> {
+    await this.setAppAddress();
+    if (!this.keyReconstructor) {
+      this.keyReconstructor = new KeyReconstructor({
+        appID: this.appAddress,
+        network: this.params.network || 'test',
+      });
+    }
+  }
+
+  private async setAppAddress(): Promise<void> {
+    if (!this.appAddress) {
+      const appAddress = await getAppAddress(this.params.appID);
+      this.appAddress = appAddress;
+    }
+  }
+
+  private checkAlreadyLoggedIn(loginType: LoginType): boolean {
+    if (this.isLoggedIn()) {
+      const storedUserInfo = this.getUserInfo();
+      if (storedUserInfo.loginType === loginType) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private setKeyAndUserInfo(userInfo: StoredUserInfo) {
+    this.store.set(StoreIndex.LOGGED_IN, JSON.stringify(userInfo));
+  }
+
+  private getOAuthCredentials(loginType: LoginType): OAuthCreds {
+    for (const creds of this.params.oauthCreds) {
+      if (creds.type == loginType.valueOf()) {
+        if (creds.clientId && creds.redirectUri) {
+          return creds;
+        } else if (creds.clientId && this.params.redirectUri) {
+          return {
+            ...creds,
+            redirectUri: this.params.redirectUri,
+          };
+        }
+      }
+    }
+    this.logger.error(`OAuth creds not found for ${loginType} login`);
+    throw new Error(`OAuth creds not found for ${loginType} login`);
+  }
+
+  private async getInfoFromHandler(
+    handler: OauthHandler,
+    params: RedirectParams
+  ) {
+    if (params.access_token) {
+      const userInfo = await handler.getUserInfo(params.access_token);
+      return userInfo;
+    } else {
+      throw new Error('access token missing');
+    }
+  }
+
+  private async getUserPrivateKey(
+    id: string,
+    token: string | undefined,
+    loginType: LoginType
+  ): Promise<string> {
+    if (!id || !token || !loginType) {
+      return Promise.reject('Invalid params');
+    }
+    try {
+      const data = await this.keyReconstructor.getPrivateKey({
+        id,
+        idToken: token,
+        verifier: loginType,
+      });
+      const logger = getLogger('getUserPrivateKey');
+      logger.info('return_data', data);
+      return data.privateKey;
+    } catch (e) {
+      this.logger.error(`Error during getting pvt key`, { e });
+      return Promise.reject('Error during getting user key');
+    }
   }
 }
-
-const generateID = function () {
-  return "_" + Math.random().toString(36).substr(2, 9);
-};
