@@ -7,9 +7,9 @@ const redditLoginBtn = document.getElementById('reddit-login');
 const { AuthProvider } = window.arcana.auth;
 
 const arcanaLogin = new AuthProvider({
-  appID: '1',
+  appID: '5',
   redirectUri: 'http://localhost:9001/examples/redirect',
-  network: 'test',
+  network: 'testnet',
   oauthCreds: [
     {
       type: 'google',

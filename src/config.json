@@ -1,4 +1,4 @@
 {
-  "signatureUrl": "https://oauth.arcana.network/oauth",
-  "gatewayUrl": "https://gateway02.arcana.network/"
+  "signatureUrl": "https://oauth01-pro-testnet.arcana.network/oauth",
+  "gatewayUrl": "https://gateway-testnet.arcana.network"
 }

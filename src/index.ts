@@ -55,7 +55,6 @@ export class AuthProvider {
   private appAddress = '';
   constructor(initParams: InitParams) {
     this.params = initParams;
-    this.logger = getLogger('AuthProvider');
 
     if (this.params.network === 'test') {
       setLogLevel(LOG_LEVEL.DEBUG);
@@ -63,6 +62,7 @@ export class AuthProvider {
     } else {
       setLogLevel(LOG_LEVEL.NOLOGS);
     }
+    this.logger = getLogger('AuthProvider');
     this.store = new SessionStore(this.params.appID);
   }
 

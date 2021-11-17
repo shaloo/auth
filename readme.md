@@ -10,12 +10,13 @@ npm install --save @arcana/auth
 yarn add @arcana/auth
 ```
 
-
 ### Using built source
 
 ```html
 <script src="<path-to>/auth.js"></script>
 ```
+
+## Usage
 
 ### Initialise the SDK
 
@@ -26,6 +27,7 @@ import { AuthProvider } from '@arcana/auth';
 
 const auth = new AuthProvider({
    appID: <appID>,
+   network: 'testnet',
    redirectUri:'',
    oauthCreds: [{
     type: 'google',
