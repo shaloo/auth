@@ -28,8 +28,9 @@
   "author": "makyl<makyl@newfang.io>",
   "license": "ISC",
   "dependencies": {
+    "@arcana/keystore": "^0.0.6",
     "@stablelib/base64": "^1.0.1",
-    "@arcana/keystore": "^0.0.6"
+    "ethers": "^5.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

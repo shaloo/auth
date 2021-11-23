@@ -28,23 +28,7 @@ import { AuthProvider } from '@arcana/auth';
 const auth = new AuthProvider({
    appID: <appID>,
    network: 'testnet',
-   redirectUri:'',
-   oauthCreds: [{
-    type: 'google',
-    clientID: '',
-   },
-   {
-    type: 'twitter',
-    clientID: '',
-   },
-   {
-    type: 'github',
-    clientID: '',
-   },
-   {
-    type: 'discord',
-    clientID: '',
-   }]
+   redirectUri:''
 })
 
 ```

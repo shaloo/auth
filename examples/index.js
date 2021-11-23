@@ -10,13 +10,6 @@ const arcanaLogin = new AuthProvider({
   appID: '5',
   redirectUri: 'http://localhost:9001/examples/redirect',
   network: 'testnet',
-  oauthCreds: [
-    {
-      type: 'google',
-      clientId:
-        '513082799772-5f9djcvtjgqvlngr9hndmnm0r372qn89.apps.googleusercontent.com',
-    },
-  ],
 });
 const login = async (verifier) => {
   await arcanaLogin.loginWithSocial(verifier);

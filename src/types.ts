@@ -26,3 +26,7 @@ export interface Store {
   delete(key: string): void;
   clear(): void;
 }
+
+export interface OAuthFetcher {
+  getClientID(loginType: LoginType): Promise<string>;
+}

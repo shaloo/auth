@@ -1,4 +1,4 @@
-import { LoginType, Store, StoredUserInfo } from './types';
+import { LoginType, OAuthFetcher, Store, StoredUserInfo } from './types';
 import {
   handleRedirectPage,
   getLoginHandler,
@@ -18,18 +18,13 @@ import {
   setLogLevel,
 } from './logger';
 import Config from './config.json';
+import { OAuthContractMeta } from './oauthMeta';
 
 interface InitParams {
   appID: string;
-  redirectUri?: string;
-  oauthCreds: OAuthCreds[];
-  network: 'test' | 'testnet';
-}
-
-interface OAuthCreds {
-  type: LoginType;
-  clientId: string;
   redirectUri: string;
+  network: 'test' | 'testnet';
+  rpcUrl?: string;
 }
 
 enum StoreIndex {
@@ -46,9 +41,20 @@ const getAppAddress = async (appID: string): Promise<string> => {
   }
 };
 
+const getCurrentConfig = async (): Promise<string> => {
+  try {
+    const res = await fetch(`${Config.gatewayUrl}/get-config/`);
+    const json: { RPC_URL: string } = await res.json();
+    return json.RPC_URL;
+  } catch (e) {
+    throw new Error(`Error during fetching config`);
+  }
+};
+
 export class AuthProvider {
   public static handleRedirectPage = handleRedirectPage;
   private params: InitParams;
+  private oauthStore: OAuthFetcher;
   private store: Store;
   private keyReconstructor: KeyReconstructor;
   private logger: Logger;
@@ -71,17 +77,19 @@ export class AuthProvider {
       return;
     }
 
-    await this.initKeyReconstructor();
+    await this.init();
 
-    const creds = this.getOAuthCredentials(loginType);
+    const clientID = await this.fetchClientID(loginType);
+
+    this.logger.info('clientID', clientID);
 
     const loginHandler = getLoginHandler(loginType, this.appAddress);
 
     const state = generateID();
 
     const url = await loginHandler.getAuthUrl({
-      clientID: creds.clientId,
-      redirectUri: creds.redirectUri,
+      clientID: clientID,
+      redirectUri: this.params.redirectUri,
       state,
     });
 
@@ -138,6 +146,16 @@ export class AuthProvider {
     return this.keyReconstructor.getPublicKey({ id, verifier });
   }
 
+  private async initConfig(): Promise<string> {
+    try {
+      const rpcUrl = await getCurrentConfig();
+      return rpcUrl;
+    } catch (e) {
+      this.logger.error('Error during config init', e);
+      throw e;
+    }
+  }
+
   private async initKeyReconstructor(): Promise<void> {
     await this.setAppAddress();
     if (!this.keyReconstructor) {
@@ -146,6 +164,26 @@ export class AuthProvider {
         network: this.params.network || 'test',
       });
     }
+  }
+
+  private async init(): Promise<void> {
+    if (!this.params.rpcUrl) {
+      const rpcUrl = await this.initConfig();
+      this.params.rpcUrl = rpcUrl;
+    }
+    await this.initKeyReconstructor();
+    this.oauthStore = new OAuthContractMeta(
+      this.appAddress,
+      this.params.rpcUrl
+    );
+  }
+
+  private async fetchClientID(loginType: LoginType): Promise<string> {
+    const clientID = await this.oauthStore.getClientID(loginType);
+    if (!clientID) {
+      throw new Error(`Client ID not found for ${loginType}`);
+    }
+    return clientID;
   }
 
   private async setAppAddress(): Promise<void> {
@@ -167,23 +205,6 @@ export class AuthProvider {
 
   private setKeyAndUserInfo(userInfo: StoredUserInfo) {
     this.store.set(StoreIndex.LOGGED_IN, JSON.stringify(userInfo));
-  }
-
-  private getOAuthCredentials(loginType: LoginType): OAuthCreds {
-    for (const creds of this.params.oauthCreds) {
-      if (creds.type == loginType.valueOf()) {
-        if (creds.clientId && creds.redirectUri) {
-          return creds;
-        } else if (creds.clientId && this.params.redirectUri) {
-          return {
-            ...creds,
-            redirectUri: this.params.redirectUri,
-          };
-        }
-      }
-    }
-    this.logger.error(`OAuth creds not found for ${loginType} login`);
-    throw new Error(`OAuth creds not found for ${loginType} login`);
   }
 
   private async getInfoFromHandler(
