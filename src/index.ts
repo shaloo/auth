@@ -20,6 +20,8 @@ import {
 import Config from './config.json';
 import { OAuthContractMeta } from './oauthMeta';
 
+export class ArcanaAuthException extends Error {}
+
 interface InitParams {
   appID: string;
   redirectUri: string;
@@ -189,6 +191,9 @@ export class AuthProvider {
   private async setAppAddress(): Promise<void> {
     if (!this.appAddress) {
       const appAddress = await getAppAddress(this.params.appID);
+      if (appAddress.length === 0) {
+        throw new ArcanaException('Address non-existent or invalid, are you sure the App ID referenced exists?');
+      }
       this.appAddress = appAddress;
     }
   }
