@@ -17,7 +17,7 @@ import {
   setExceptionReporter,
   setLogLevel,
 } from './logger';
-import Config from './config.json';
+import Config from './config';
 import { OAuthContractMeta } from './oauthMeta';
 import { ArcanaAuthException } from './errors';
 

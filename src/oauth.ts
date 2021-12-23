@@ -1,7 +1,7 @@
 import { getLogger } from './logger';
 import { UserInfo } from './types';
 import { generateID, RedirectParams } from './utils';
-import Config from './config.json';
+import Config from './config';
 import { ArcanaAuthException } from './errors';
 
 interface OauthParams {
