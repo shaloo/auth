@@ -7,6 +7,7 @@ import {
   TwitterHandler,
   GithubHandler,
 } from '../src/oauth';
+import { ArcanaAuthException } from '../src/errors';
 
 const fetchMock = fetch as FetchMock;
 
@@ -247,7 +248,7 @@ describe('GithubHandler', () => {
     };
     const res = h.handleRedirectParams(input);
     expect(res).rejects.toEqual(
-      new Error('Expected `code` from github hash params')
+      new ArcanaAuthException('Expected `code` from github hash params')
     );
   });
 });

@@ -2,6 +2,8 @@ import { getLogger } from './logger';
 import { UserInfo } from './types';
 import { generateID, RedirectParams } from './utils';
 import Config from './config.json';
+import { ArcanaAuthException } from './errors';
+
 interface OauthParams {
   redirectUri: string;
   state: string;
@@ -27,7 +29,7 @@ export const request = async <T>(
     return data as T;
   } else {
     logger.error('error_during_request', { err: data });
-    throw new Error(`Error during getting user info`);
+    throw new ArcanaAuthException(`Error during getting user info`);
   }
 };
 
@@ -344,7 +346,7 @@ export class GithubHandler implements OauthHandler {
     params: RedirectParams
   ): Promise<RedirectParams> => {
     if (!params.code) {
-      throw new Error('Expected `code` from github hash params');
+      throw new ArcanaAuthException('Expected `code` from github hash params');
     }
     const accessToken = await this.getTokenFromCode(this.appID, params.code);
 
@@ -405,7 +407,7 @@ export class TwitterHandler implements OauthHandler {
     this.oauthToken = params.oauth_token;
     this.oauthTokenSecret = params.oauth_token;
     if (!this.oauthToken) {
-      throw new Error('Error did not have token when expected!');
+      throw new ArcanaAuthException('Error did not have token when expected!');
     }
     return this.oauthUrl + this.oauthToken;
   }
@@ -417,7 +419,7 @@ export class TwitterHandler implements OauthHandler {
     oauth_verifier: string;
   }): Promise<TwitterInternalResponse> {
     if (!oauth_token || !oauth_verifier) {
-      throw new Error(`Missing token or verifier`);
+      throw new ArcanaAuthException(`Missing token or verifier`);
     }
     const url = new URL(`${this.sigUrl}/accessToken`);
     url.searchParams.append('oauth_token', oauth_token);

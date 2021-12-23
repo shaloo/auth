@@ -19,8 +19,7 @@ import {
 } from './logger';
 import Config from './config.json';
 import { OAuthContractMeta } from './oauthMeta';
-
-export class ArcanaAuthException extends Error {}
+import { ArcanaAuthException } from './errors';
 
 interface InitParams {
   appID: string;
@@ -39,7 +38,7 @@ const getAppAddress = async (appID: string): Promise<string> => {
     const json: { address: string } = await res.json();
     return json.address;
   } catch (e) {
-    throw new Error(`Invalid appID: ${appID}`);
+    throw new ArcanaAuthException(`Invalid appID: ${appID}`);
   }
 };
 
@@ -49,7 +48,7 @@ const getCurrentConfig = async (): Promise<string> => {
     const json: { RPC_URL: string } = await res.json();
     return json.RPC_URL;
   } catch (e) {
-    throw new Error(`Error during fetching config`);
+    throw new ArcanaAuthException(`Error during fetching config`);
   }
 };
 
@@ -124,7 +123,7 @@ export class AuthProvider {
       return info;
     } else {
       this.logger.error('Error: getUserInfo');
-      throw new Error('Please initialize the sdk before fetching user info.');
+      throw new ArcanaAuthException('Please initialize the sdk before fetching user info.');
     }
   }
 
@@ -183,7 +182,7 @@ export class AuthProvider {
   private async fetchClientID(loginType: LoginType): Promise<string> {
     const clientID = await this.oauthStore.getClientID(loginType);
     if (!clientID) {
-      throw new Error(`Client ID not found for ${loginType}`);
+      throw new ArcanaAuthException(`Client ID not found for ${loginType}`);
     }
     return clientID;
   }
@@ -192,7 +191,7 @@ export class AuthProvider {
     if (!this.appAddress) {
       const appAddress = await getAppAddress(this.params.appID);
       if (appAddress.length === 0) {
-        throw new ArcanaException('Address non-existent or invalid, are you sure the App ID referenced exists?');
+        throw new ArcanaAuthException('Address non-existent or invalid, are you sure the App ID referenced exists?');
       }
       this.appAddress = appAddress;
     }
@@ -220,7 +219,7 @@ export class AuthProvider {
       const userInfo = await handler.getUserInfo(params.access_token);
       return userInfo;
     } else {
-      throw new Error('access token missing');
+      throw new ArcanaAuthException('access token missing');
     }
   }
 
