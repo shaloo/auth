@@ -11,6 +11,8 @@ import {
 import * as Sentry from '@sentry/browser';
 import { getLogger } from './logger';
 
+export class ArcanaException extends Error {}
+
 export function getLoginHandler(
   loginType: LoginType,
   appID: string
@@ -103,8 +105,25 @@ export const parseAndSendRedirectParams = (
   return;
 };
 
-const isParamsEmpty = (params: RedirectParams): boolean => {
+export const isParamsEmpty = (params: RedirectParams): boolean => {
   return Object.keys(params).length === 0;
+};
+
+export const validateParams = (
+  params: RedirectParams,
+  state: string | null
+): Error | null => {
+  if (params.error) {
+    const e = new Error(params.error_description);
+    e.name = params.error;
+    return e;
+  }
+  if (params.state && params.state !== state) {
+    const e = new Error('State did not match');
+    e.name = 'StateMismatch';
+    return e;
+  }
+  return null;
 };
 
 export const generateID = (): string => {

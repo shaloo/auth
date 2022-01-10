@@ -1,5 +1,5 @@
 import { getLogger } from './logger';
-import { UserInfo } from './types';
+import { LoginType, UserInfo } from './types';
 import { generateID, RedirectParams } from './utils';
 import Config from './config';
 import { ArcanaAuthException } from './errors';
@@ -16,6 +16,7 @@ export interface OauthHandler {
   getUserInfo(accessToken: string): Promise<UserInfo>;
   handleRedirectParams(params: RedirectParams): Promise<RedirectParams>;
   cleanup(): Promise<void>;
+  loginType: LoginType;
 }
 
 export const request = async <T>(
@@ -41,6 +42,7 @@ interface GoogleUserInfoResponse {
 }
 
 export class GoogleHandler implements OauthHandler {
+  public readonly loginType = LoginType.google;
   private oauthUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
   private responseType = 'token id_token';
   private scope = 'profile email openid';
@@ -86,7 +88,12 @@ export class GoogleHandler implements OauthHandler {
       const data = await request<GoogleUserInfoResponse>(this.userInfoUrl, {
         Authorization: `Bearer ${accessToken}`,
       });
-      return { id: data.email, name: data.name, picture: data.picture };
+      return {
+        id: data.email,
+        email: data.email,
+        name: data.name,
+        picture: data.picture,
+      };
     } catch (e) {
       return Promise.reject(e);
     }
@@ -104,6 +111,7 @@ interface RedditUserInfoResponse {
 }
 
 export class RedditHandler implements OauthHandler {
+  public readonly loginType = LoginType.reddit;
   private userInfoUrl = 'https://oauth.reddit.com/api/v1/me';
   private scope = 'identity';
   private responseType = 'token';
@@ -164,6 +172,7 @@ interface DiscordUserInfoResponse {
 }
 
 export class DiscordHandler implements OauthHandler {
+  public readonly loginType = LoginType.discord;
   private oauthUrl = 'https://discord.com/api/oauth2/authorize';
   private responseType = 'token';
   private scope = 'identify email';
@@ -235,6 +244,7 @@ interface TwitchUserInfoResponse {
 }
 
 export class TwitchHandler implements OauthHandler {
+  public readonly loginType = LoginType.twitch;
   private clientId: string;
   private userInfoUrl = 'https://api.twitch.tv/helix/users';
   private oauthUrl = 'https://id.twitch.tv/oauth2/authorize';
@@ -312,6 +322,7 @@ interface GithubUserInfoResponse {
 }
 
 export class GithubHandler implements OauthHandler {
+  public readonly loginType = LoginType.github;
   private url = 'https://api.github.com/user';
   private oauthUrl = 'https://github.com/login/oauth/authorize';
   private sigUrl = `${Config.signatureUrl}/github`;
@@ -389,6 +400,7 @@ interface TwitterInternalResponse {
 }
 
 export class TwitterHandler implements OauthHandler {
+  public readonly loginType = LoginType.twitter;
   private oauthToken: string;
   private sigUrl = `${Config.signatureUrl}/twitter`;
   private oauthTokenSecret: string;

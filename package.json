@@ -3,8 +3,8 @@
   "version": "0.0.6",
   "description": "Arcana auth SDK for easier logins",
   "main": "dist/index.js",
-  "jsdelivr": "dist/standalone/auth.umd.js",
-  "unpkg": "dist/standalone/auth.umd.js",
+  "jsdelivr": "dist/standalone/auth.min.js",
+  "unpkg": "dist/standalone/auth.min.js",
   "types": "types/index.d.ts",
   "files": [
     "dist",
@@ -12,8 +12,9 @@
   ],
   "scripts": {
     "build": "npm run build:ts && npm run build:web",
+    "build:web": "node build.js",
+    "dev": "esbuild src/index.ts --define:global=window --watch --inject:config/esbuild.inject.js --format=iife --global-name=arcana.auth --bundle --target=chrome58,firefox57,safari11,edge18  --outfile=dist/standalone/auth.min.js",
     "build:ts": "tsc --project tsconfig.json",
-    "build:web": "webpack",
     "test": "jest --verbose",
     "test:coverage": "jest --coverage",
     "lint": "eslint ./src",
@@ -33,6 +34,7 @@
     "ethers": "^5.5.1"
   },
   "devDependencies": {
+    "esbuild": "^0.14.10",
     "@babel/core": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
     "@babel/preset-typescript": "^7.15.0",
@@ -53,9 +55,6 @@
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
     "ts-loader": "^9.2.6",
-    "typescript": "^4.4.4",
-    "webpack": "^5.62.1",
-    "webpack-cli": "^4.9.1",
-    "webpack-merge": "^5.8.0"
+    "typescript": "^4.4.4"
   }
 }

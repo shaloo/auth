@@ -25,22 +25,22 @@ const { AuthProvider } = window.arcana.auth;
 // or
 import { AuthProvider } from '@arcana/auth';
 
-const auth = new AuthProvider({
+const auth = await AuthProvider.init({
    appID: <appID>,
-   network: 'testnet',
-   redirectUri:''
-})
-
+   network: 'testnet', // 'test' or 'testnet'
+   uxMode: 'redirect' // 'popup' or 'redirect'
+   redirectUri:'' // Can be ignored for redirect flow
+});
 ```
 
-### On redirect Page
+### On redirect Page for popup flow
 
 ```js
 const { AuthProvider } = window.arcana.auth;
 // or
 import { AuthProvider } from '@arcana/auth';
 
-window.onload = () => {
+window.onload = async () => {
   AuthProvider.handleRedirectPage(<origin>);
 };
 ```
@@ -48,7 +48,11 @@ window.onload = () => {
 ### Initiate login
 
 ```js
-await auth.loginWithSocial(<loginType>);
+const { SocialLoginType } = window.arcana.auth;
+// or
+import { SocialLoginType } from '@arcana/auth';
+
+await auth.loginWithSocial(SocialLoginType.google);
 ```
 
 ### Get user info
@@ -69,10 +73,10 @@ const userInfo = auth.getUserInfo();
 */
 ```
 
-### Get public  key
+### Get public key
 
 ```js
-const userInfo = await auth.getPublicKey({
+const { X, Y } = await auth.getPublicKey({
   verifier: <loginType>,
   id: <email | username>,
 });
@@ -82,7 +86,7 @@ const userInfo = await auth.getPublicKey({
 ```js
 const loggedIn = auth.isLoggedIn();
 if (!loggedIn) {
-  await auth.loginWithSocial(<loginType>);
+  await auth.loginWithSocial(SocialLoginType.google);
 }
 const userInfo = auth.getUserInfo()
 ```
@@ -95,5 +99,5 @@ await auth.logout();
 
 ### Variables
 
-* `loginType` - discord, twitter, github, google, twitch, reddit
+* `SocialLoginType` - discord, twitter, github, google, twitch, reddit
 * `origin` - Base url of your app. 
