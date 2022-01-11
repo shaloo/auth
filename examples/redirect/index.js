@@ -23,6 +23,10 @@ window.onload = async function() {
       uxMode: 'redirect',
       // Skip redirectUri if it is same as current url
     });
+
+    const logins = await auth.getAvailableLogins();
+    console.log({ logins });
+
     if (auth.isLoggedIn()) {
       const info = auth.getUserInfo();
       console.log({ info });

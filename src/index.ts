@@ -101,6 +101,10 @@ class AuthProvider {
     await this.fetchInfoAndKey(loginHandler, params);
   }
 
+  public async getAvailableLogins(): Promise<string[]> {
+    await this.init();
+    return this.oauthStore.getLogins();
+  }
   public getUserInfo(): StoredUserInfo {
     const userInfo = this.store.get(StoreIndex.LOGGED_IN);
     if (userInfo) {

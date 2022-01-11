@@ -51,4 +51,5 @@ export interface Store {
 
 export interface OAuthFetcher {
   getClientID(loginType: LoginType): Promise<string>;
+  getLogins(): Promise<string[]>;
 }
