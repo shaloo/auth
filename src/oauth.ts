@@ -9,6 +9,7 @@ interface OauthParams {
   state: string;
   clientID: string;
   nonce?: string;
+  extraParams?: { [k: string]: string };
 }
 
 export interface OauthHandler {
@@ -25,6 +26,7 @@ export const request = async <T>(
 ): Promise<T> => {
   const response = await fetch(url, { headers });
   const data = await response.json();
+
   const logger = getLogger('request');
   if (response.status < 400) {
     return data as T;
@@ -88,6 +90,7 @@ export class GoogleHandler implements OauthHandler {
       const data = await request<GoogleUserInfoResponse>(this.userInfoUrl, {
         Authorization: `Bearer ${accessToken}`,
       });
+      console.log({ data });
       return {
         id: data.email,
         email: data.email,
@@ -493,5 +496,71 @@ export class TwitterHandler implements OauthHandler {
 
       logger.error('error_cleanup_twitter', { err });
     }
+  }
+}
+
+interface PasswordlessInfoResponse {
+  name?: string;
+  email: string;
+}
+export class PasswordlessHandler implements OauthHandler {
+  public readonly loginType = LoginType.passwordless;
+  private oauthUrl = 'https://passwordless.dev.arcana.network/oauth/authorize';
+  private userInfoUrl =
+    'https://passwordless.dev.arcana.network/api/token/verify';
+
+  constructor(private appID: string) {
+    return;
+  }
+
+  public async getAuthUrl({
+    clientID,
+    redirectUri,
+    state,
+    nonce,
+    extraParams,
+  }: OauthParams): Promise<string> {
+    const url = new URL(this.oauthUrl);
+    url.searchParams.append('client_id', clientID);
+    url.searchParams.append('redirect_uri', redirectUri);
+    url.searchParams.append('state', state);
+    url.searchParams.append('nonce', nonce ? nonce : generateID());
+    if (extraParams?.email) {
+      url.searchParams.append('email', extraParams.email);
+    }
+    url.searchParams.append('nonce', nonce ? nonce : generateID());
+    return url.toString();
+  }
+
+  public handleRedirectParams = async (
+    params: RedirectParams
+  ): Promise<RedirectParams> => {
+    if (!params.access_token && params.id_token) {
+      return {
+        ...params,
+        access_token: params.id_token,
+      };
+    } else {
+      return { ...params };
+    }
+  };
+
+  public async getUserInfo(accessToken: string): Promise<UserInfo> {
+    try {
+      const data = await request<PasswordlessInfoResponse>(this.userInfoUrl, {
+        Authorization: `Bearer ${accessToken}`,
+      });
+      return {
+        id: data.email,
+        email: data.email,
+        name: data.name,
+      };
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  public async cleanup(): Promise<void> {
+    return;
   }
 }

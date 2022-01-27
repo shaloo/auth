@@ -26,7 +26,7 @@ const { AuthProvider } = window.arcana.auth;
 import { AuthProvider } from '@arcana/auth';
 
 const auth = await AuthProvider.init({
-   appID: <appID>,
+   appId: <appId>,
    network: 'testnet', // 'test' or 'testnet'
    uxMode: 'redirect' // 'popup' or 'redirect'
    redirectUri:'' // Can be ignored for redirect flow

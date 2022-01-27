@@ -34,6 +34,8 @@ import { OAuthContractMeta } from './oauthMeta';
 import { LocalStore } from './localStore';
 import { ArcanaAuthException } from './errors';
 
+type PublicKeyOutput = 'point' | 'compressed' | 'uncompressed';
+
 class AuthProvider {
   public static async init(params: InitParams): Promise<AuthProvider> {
     const provider = new AuthProvider(params);
@@ -59,8 +61,8 @@ class AuthProvider {
       setLogLevel(LOG_LEVEL.NOLOGS);
     }
     this.logger = getLogger('AuthProvider');
-    this.store = new SessionStore(this.params.appID);
-    this.localstore = new LocalStore(this.params.appID);
+    this.store = new SessionStore(this.params.appId);
+    this.localstore = new LocalStore(this.params.appId);
   }
 
   public async loginWithSocial(loginType: LoginType): Promise<void> {
@@ -101,6 +103,49 @@ class AuthProvider {
     await this.fetchInfoAndKey(loginHandler, params);
   }
 
+  public async loginWithOtp(email: string): Promise<void> {
+    if (this.checkAlreadyLoggedIn(LoginType.passwordless)) {
+      return;
+    }
+
+    await this.init();
+
+    const loginHandler = getLoginHandler(
+      LoginType.passwordless,
+      this.appAddress
+    );
+
+    const state = generateID();
+
+    const url = await loginHandler.getAuthUrl({
+      clientID: this.params.appId,
+      redirectUri: this.params.redirectUri,
+      state,
+      extraParams: { email },
+    });
+
+    if (this.params.uxMode == 'redirect') {
+      this.localstore.set<LoginType>(
+        StoreIndex.LOGIN_TYPE,
+        LoginType.passwordless
+      );
+      this.localstore.set<string>(StoreIndex.STATE, state);
+      setTimeout(() => (window.location.href = url), 50);
+      return;
+    }
+
+    const popup = new Popup(url, state);
+    popup.open();
+
+    const params = await popup.getWindowResponse(
+      loginHandler.handleRedirectParams
+    );
+
+    console.log({ params });
+
+    await this.fetchInfoAndKey(loginHandler, params);
+  }
+
   public async getAvailableLogins(): Promise<string[]> {
     await this.init();
     return this.oauthStore.getLogins();
@@ -127,15 +172,25 @@ class AuthProvider {
     this.store.clear();
   }
 
-  public async getPublicKey({
-    id,
-    verifier,
-  }: {
-    id: string;
-    verifier: LoginType;
-  }): Promise<{ X: string; Y: string }> {
+  public async getPublicKey(
+    {
+      id,
+      verifier,
+    }: {
+      id: string;
+      verifier: LoginType;
+    },
+    output: PublicKeyOutput = 'point'
+  ): Promise<{ X: string; Y: string } | string> {
     await this.initKeyReconstructor();
-    return this.keyReconstructor.getPublicKey({ id, verifier });
+    const { X, Y } = await this.keyReconstructor.getPublicKey({ id, verifier });
+    if (output == 'point') {
+      return { X: X.padStart(64, '0'), Y: Y.padStart(64, '0') };
+    } else if (output == 'compressed') {
+      return '03' + X.padStart(64, '0');
+    } else {
+      return '04' + X.padStart(64, '0') + Y.padStart(64, '0');
+    }
   }
 
   public async checkRedirectMode(): Promise<void> {
@@ -251,7 +306,7 @@ class AuthProvider {
 
   private async setAppAddress(): Promise<void> {
     if (!this.appAddress) {
-      const appAddress = await getAppAddress(this.params.appID);
+      const appAddress = await getAppAddress(this.params.appId);
       if (appAddress.length === 0) {
         throw new ArcanaAuthException(
           'Address non-existent or invalid, are you sure the App ID referenced exists?'
@@ -281,6 +336,7 @@ class AuthProvider {
   ) {
     if (params.access_token) {
       const userInfo = await handler.getUserInfo(params.access_token);
+      console.log({ userInfo });
       return userInfo;
     } else {
       throw new ArcanaAuthException('access token missing');
@@ -313,20 +369,20 @@ class AuthProvider {
   }
 }
 
-const getAppAddress = async (appID: string): Promise<string> => {
+const getAppAddress = async (appId: string): Promise<string> => {
   try {
-    const res = await fetch(`${Config.gatewayUrl}/get-address/?id=${appID}`);
+    const res = await fetch(`${Config.gatewayUrl}/get-address/?id=${appId}`);
     const json: { address: string } = await res.json();
     let address = json?.address;
     if (!address) {
-      throw new ArcanaException(`Invalid appID: ${appID}`);
+      throw new ArcanaException(`Invalid appId: ${appId}`);
     }
     if (!address.startsWith('0x')) {
       address = '0x' + address;
     }
     return address;
   } catch (e) {
-    throw new ArcanaException(`Invalid appID: ${appID}`);
+    throw new ArcanaException(`Invalid appId: ${appId}`);
   }
 };
 

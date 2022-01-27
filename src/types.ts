@@ -5,6 +5,7 @@ export enum LoginType {
   twitch = 'twitch',
   github = 'github',
   twitter = 'twitter',
+  passwordless = 'passwordless',
 }
 
 export interface UserInfo {
@@ -21,7 +22,7 @@ export interface StoredUserInfo {
 }
 
 export interface InitParams {
-  appID: string;
+  appId: string;
   redirectUri?: string;
   network?: 'test' | 'testnet';
   rpcUrl?: string;
@@ -29,7 +30,7 @@ export interface InitParams {
 }
 
 export interface StateParams {
-  appID: string;
+  appId: string;
   redirectUri: string;
   network: 'test' | 'testnet';
   rpcUrl?: string;
