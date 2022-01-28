@@ -25,7 +25,7 @@ export interface InitParams {
   redirectUri?: string;
   network?: 'test' | 'testnet';
   rpcUrl?: string;
-  uxMode?: 'popup' | 'redirect';
+  flow?: 'popup' | 'redirect';
 }
 
 export interface StateParams {
@@ -33,7 +33,7 @@ export interface StateParams {
   redirectUri: string;
   network: 'test' | 'testnet';
   rpcUrl?: string;
-  uxMode: 'popup' | 'redirect';
+  flow: 'popup' | 'redirect';
 }
 
 export enum StoreIndex {

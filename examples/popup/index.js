@@ -20,7 +20,7 @@ window.onload = async function() {
     auth = await AuthProvider.init({
       appID: '19',
       network: 'testnet',
-      uxMode: 'popup',
+      flow: 'popup',
       redirectUri: 'http://localhost:9001/examples/popup/redirect',
       // Skip redirectUri if it is same as current url
     });

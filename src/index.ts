@@ -37,7 +37,7 @@ import { ArcanaAuthException } from './errors';
 class AuthProvider {
   public static async init(params: InitParams): Promise<AuthProvider> {
     const provider = new AuthProvider(params);
-    if (provider.params.uxMode == 'redirect') {
+    if (provider.params.flow == 'redirect') {
       await provider.checkRedirectMode();
     }
     return provider;
@@ -84,7 +84,7 @@ class AuthProvider {
       state,
     });
 
-    if (this.params.uxMode == 'redirect') {
+    if (this.params.flow == 'redirect') {
       this.localstore.set<LoginType>(StoreIndex.LOGIN_TYPE, loginType);
       this.localstore.set<string>(StoreIndex.STATE, state);
       setTimeout(() => (window.location.href = url), 50);
@@ -170,7 +170,7 @@ class AuthProvider {
       redirectUri: p.redirectUri
         ? p.redirectUri
         : window.location.origin + window.location.pathname,
-      uxMode: p.uxMode ? p.uxMode : 'redirect',
+      flow: p.flow ? p.flow : 'redirect',
       network: p.network ? p.network : 'test',
     };
     return params;
