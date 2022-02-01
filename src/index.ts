@@ -60,6 +60,9 @@ class AuthProvider {
     } else {
       setLogLevel(LOG_LEVEL.NOLOGS);
     }
+    if (params.appAddress) {
+      this.appAddress = params.appAddress;
+    }
     this.logger = getLogger('AuthProvider');
     this.store = new SessionStore(this.params.appId);
     this.localstore = new LocalStore(this.params.appId);
@@ -118,7 +121,7 @@ class AuthProvider {
     const state = generateID();
 
     const url = await loginHandler.getAuthUrl({
-      clientID: this.params.appId,
+      clientID: this.appAddress,
       redirectUri: this.params.redirectUri,
       state,
       extraParams: { email },
@@ -150,6 +153,7 @@ class AuthProvider {
     await this.init();
     return this.oauthStore.getLogins();
   }
+
   public getUserInfo(): StoredUserInfo {
     const userInfo = this.store.get(StoreIndex.LOGGED_IN);
     if (userInfo) {
@@ -227,6 +231,7 @@ class AuthProvider {
         : window.location.origin + window.location.pathname,
       uxMode: p.uxMode ? p.uxMode : 'redirect',
       network: p.network ? p.network : 'test',
+      rpcUrl: p.rpcUrl || '',
     };
     return params;
   }

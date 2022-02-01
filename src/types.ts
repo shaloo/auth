@@ -23,6 +23,7 @@ export interface StoredUserInfo {
 
 export interface InitParams {
   appId: string;
+  appAddress?: string;
   redirectUri?: string;
   network?: 'test' | 'testnet';
   rpcUrl?: string;

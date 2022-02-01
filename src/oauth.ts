@@ -505,9 +505,8 @@ interface PasswordlessInfoResponse {
 }
 export class PasswordlessHandler implements OauthHandler {
   public readonly loginType = LoginType.passwordless;
-  private oauthUrl = 'https://passwordless.dev.arcana.network/oauth/authorize';
-  private userInfoUrl =
-    'https://passwordless.dev.arcana.network/api/token/verify';
+  private oauthUrl = `${Config.passwordlessUrl}/oauth/authorize`;
+  private userInfoUrl = `${Config.passwordlessUrl}/api/token/verify`;
 
   constructor(private appID: string) {
     return;
