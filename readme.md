@@ -33,8 +33,8 @@ import { AuthProvider,SocialLoginType } from '@arcana/auth';
 const auth = await AuthProvider.init({
    appId: `${appId}`,
    network: 'testnet', // 'test' or 'testnet'
-   flow: 'redirect' // 'popup' or 'redirect'
-   redirectUri:'' // Can be ignored for redirect flow
+   flow: 'redirect', // 'popup' or 'redirect'
+   redirectUri:'' // Can be ignored for redirect flow if same as login page
 });
 ```
 
@@ -96,7 +96,7 @@ window.onload = async () => {
   const auth = await AuthProvider.init({
     appId: `${appId}`,
     network: 'testnet',
-    flow: 'redirect'
+    flow: 'redirect',
     redirectUri:'path/to/redirect' 
   });
 
@@ -112,7 +112,7 @@ window.onload = async () => {
   const auth = await AuthProvider.init({
     appId: `${appId}`,
     network: 'testnet',
-    flow: 'redirect'
+    flow: 'redirect',
     redirectUri:'path/to/redirect' 
   });
   if(auth.isLoggedIn()) {
@@ -131,7 +131,7 @@ window.onload = async () => {
   const auth = await AuthProvider.init({
     appId: `${appId}`,
     network: 'testnet',
-    flow: 'popup'
+    flow: 'popup',
     redirectUri:'path/to/redirect' 
   });
 
