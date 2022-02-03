@@ -1,13 +1,26 @@
+/* eslint no-undef: 0 */
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const esbuild = require('esbuild');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const alias = require('esbuild-plugin-alias');
+
 (async () => {
   console.time('Build time');
-  let esbuild = require('esbuild');
   const result = await esbuild
     .build({
       entryPoints: ['src/index.ts'],
       bundle: true,
       target: ['chrome58', 'firefox57', 'safari11', 'edge18'],
       globalName: 'arcana.auth',
-      inject: ['config/esbuild.inject.js'],
+      plugins: [
+        alias({
+          assert: require.resolve('assert/'),
+          buffer: require.resolve('buffer/'),
+          crypto: require.resolve('crypto-browserify'),
+          stream: require.resolve('stream-browserify'),
+          util: require.resolve('util/')
+        })
+      ],
       define: {
         global: 'window',
       },
