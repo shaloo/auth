@@ -170,8 +170,8 @@ class AuthProvider {
       redirectUri: p.redirectUri
         ? p.redirectUri
         : window.location.origin + window.location.pathname,
-      flow: p.flow ? p.flow : 'redirect',
-      network: p.network ? p.network : 'test',
+      flow: p.flow ? p.flow : 'popup',
+      network: p.network ? p.network : 'testnet',
     };
     return params;
   }

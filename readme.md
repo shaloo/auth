@@ -32,7 +32,6 @@ import { AuthProvider,SocialLoginType } from '@arcana/auth';
 ```js
 const auth = await AuthProvider.init({
    appId: `${appId}`,
-   network: 'testnet', // 'test' or 'testnet'
    flow: 'redirect', // 'popup' or 'redirect'
    redirectUri:'' // Can be ignored for redirect flow if same as login page
 });
@@ -95,7 +94,6 @@ await auth.logout();
 window.onload = async () => {
   const auth = await AuthProvider.init({
     appId: `${appId}`,
-    network: 'testnet',
     flow: 'redirect',
     redirectUri:'path/to/redirect' 
   });
@@ -106,21 +104,6 @@ window.onload = async () => {
 }
 ```
 
-`redirect.js`
-```js
-window.onload = async () => {
-  const auth = await AuthProvider.init({
-    appId: `${appId}`,
-    network: 'testnet',
-    flow: 'redirect',
-    redirectUri:'path/to/redirect' 
-  });
-  if(auth.isLoggedIn()) {
-    const info = auth.getUserInfo();
-    // Store info and redirect accordingly
-  }
-}
-```
 - Skip `redirectUri` in params if the it is same as login page.
 
 ### **Popup**
@@ -130,8 +113,6 @@ window.onload = async () => {
 window.onload = async () => {
   const auth = await AuthProvider.init({
     appId: `${appId}`,
-    network: 'testnet',
-    flow: 'popup',
     redirectUri:'path/to/redirect' 
   });
 
