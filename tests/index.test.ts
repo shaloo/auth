@@ -108,7 +108,7 @@ describe('AuthProvider', () => {
     const { rpcResponse, appAddressResponse } = getGatewayAPIMockResponse();
     fetchMock.mockResponseOnce(JSON.stringify(rpcResponse));
     fetchMock.mockResponseOnce(JSON.stringify(appAddressResponse));
-    const auth = await AuthProvider.init({ appID });
+    const auth = await AuthProvider.init({ appID, flow: 'redirect' });
 
     expect(fetchMock).toBeCalledTimes(2);
     expect(auth['params'].appID).toEqual(appID);
@@ -132,7 +132,7 @@ describe('AuthProvider', () => {
       {}
     );
     mockGetPrivate.mockResolvedValueOnce({ privateKey: samplePrivateKey });
-    const auth = await AuthProvider.init({ appID });
+    const auth = await AuthProvider.init({ appID, flow: 'redirect' });
 
     expect(mockGetPrivate).toBeCalledWith({
       id: email,
@@ -154,6 +154,7 @@ describe('AuthProvider', () => {
     fetchMock.mockResponseOnce(JSON.stringify(appAddressResponse));
     const auth = await AuthProvider.init({
       appID,
+      flow: 'redirect',
       redirectUri: 'http://localhost/redirect',
     });
     await auth.loginWithSocial(LoginType.google);
