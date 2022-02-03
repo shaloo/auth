@@ -10,61 +10,37 @@ npm install --save @arcana/auth
 yarn add @arcana/auth
 ```
 
-### Using built source
-
+### Using CDN
 ```html
-<script src="<path-to>/auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@arcana/auth"></script>
+```
+```html
+<script src="https://unpkg.com/@arcana/auth"></script>
 ```
 
 ## Usage
 
-### Initialise the SDK
+### Import 
 
 ```js
-const { AuthProvider } = window.arcana.auth;
+const { AuthProvider, SocialLoginType } = window.arcana.auth;
 // or
-import { AuthProvider } from '@arcana/auth';
+import { AuthProvider,SocialLoginType } from '@arcana/auth';
+```
+### Initialise
 
-const auth = new AuthProvider({
-   appID: <appID>,
-   network: 'testnet',
-   redirectUri:'',
-   oauthCreds: [{
-    type: 'google',
-    clientID: '',
-   },
-   {
-    type: 'twitter',
-    clientID: '',
-   },
-   {
-    type: 'github',
-    clientID: '',
-   },
-   {
-    type: 'discord',
-    clientID: '',
-   }]
-})
-
+```js
+const auth = await AuthProvider.init({
+   appId: `${appId}`,
+   flow: 'redirect', // 'popup' or 'redirect'
+   redirectUri:'' // Can be ignored for redirect flow if same as login page
+});
 ```
 
-### On redirect Page
+### Initiate social login
 
 ```js
-const { AuthProvider } = window.arcana.auth;
-// or
-import { AuthProvider } from '@arcana/auth';
-
-window.onload = () => {
-  AuthProvider.handleRedirectPage(<origin>);
-};
-```
-
-### Initiate login
-
-```js
-await auth.loginWithSocial(<loginType>);
+await auth.loginWithSocial(SocialLoginType.google);
 ```
 
 ### Get user info
@@ -85,10 +61,10 @@ const userInfo = auth.getUserInfo();
 */
 ```
 
-### Get public  key
+### Get public key
 
 ```js
-const userInfo = await auth.getPublicKey({
+const { X, Y } = await auth.getPublicKey({
   verifier: <loginType>,
   id: <email | username>,
 });
@@ -98,7 +74,7 @@ const userInfo = await auth.getPublicKey({
 ```js
 const loggedIn = auth.isLoggedIn();
 if (!loggedIn) {
-  await auth.loginWithSocial(<loginType>);
+  await auth.loginWithSocial(SocialLoginType.google);
 }
 const userInfo = auth.getUserInfo()
 ```
@@ -109,7 +85,54 @@ const userInfo = auth.getUserInfo()
 await auth.logout();
 ```
 
+## Flow modes
+
+### **Redirect**
+
+`login.js`
+```js
+window.onload = async () => {
+  const auth = await AuthProvider.init({
+    appId: `${appId}`,
+    flow: 'redirect',
+    redirectUri:'path/to/redirect' 
+  });
+
+  googleLoginBtn.addEventListener('click', async () => {
+    await auth.loginWithSocial(SocialLoginType.google);
+  });
+}
+```
+
+- Skip `redirectUri` in params if the it is same as login page.
+
+### **Popup**
+
+`login.js`
+```js
+window.onload = async () => {
+  const auth = await AuthProvider.init({
+    appId: `${appId}`,
+    redirectUri:'path/to/redirect' 
+  });
+
+  googleLoginBtn.addEventListener('click', async () => {
+    await auth.loginWithSocial(SocialLoginType.google);
+    if(auth.isLoggedIn()) {
+      const info = auth.getUserInfo();
+      // Store info and redirect accordingly
+    }
+  });
+}
+```
+
+`redirect.js`
+```js
+window.onload = async () => {
+  AuthProvider.handleRedirectPage(<origin>);
+};
+```
 ### Variables
 
-* `loginType` - discord, twitter, github, google, twitch, reddit
+* `SocialLoginType` - discord, twitter, github, google, twitch, reddit
 * `origin` - Base url of your app. 

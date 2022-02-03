@@ -1,4 +1,5 @@
 import { b64, utf8 } from './codec';
+import { ArcanaAuthException } from './errors';
 
 interface StoreValue {
   version: 1;
@@ -61,7 +62,7 @@ class SessionStore {
 
   private persist() {
     if (typeof window === 'undefined') {
-      throw new Error(
+      throw new ArcanaAuthException(
         'SessionKeystore.persist is only available in the browser.'
       );
     }
