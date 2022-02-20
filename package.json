@@ -1,7 +1,7 @@
 {
   "name": "@arcana/auth",
   "version": "0.0.8",
-  "description": "Arcana auth SDK for easier logins",
+  "description": "Arcana Auth SDK for dApps to enable user login / signup through decentralised, non-custodial key management.",
   "main": "dist/index.js",
   "jsdelivr": "dist/standalone/auth.min.js",
   "unpkg": "dist/standalone/auth.min.js",
