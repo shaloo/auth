@@ -1,7 +1,7 @@
 {
   "name": "@arcana/auth",
   "version": "0.0.8",
-  "description": "Arcana Auth SDK for dApps to enable user login / signup through decentralised, non-custodial key management.",
+  "description": "Arcana Auth SDK to build end-user login / signup for dApps easily, using popular Social Authentication: Google, Twitter, Discord, Twitch, Reddit and GitHub.",
   "main": "dist/index.js",
   "jsdelivr": "dist/standalone/auth.min.js",
   "unpkg": "dist/standalone/auth.min.js",
