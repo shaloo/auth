@@ -36,6 +36,8 @@ export function getLoginHandler(
     case LoginType.twitter: {
       return new TwitterHandler(appID);
     }
+    case LoginType.xyz: {
+      return new xyzHandler(appID);
   }
 }
 
